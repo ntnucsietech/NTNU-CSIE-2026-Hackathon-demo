@@ -60,8 +60,8 @@ var enemiesTier2 = [
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 46, def: 15, reward: { money: 80 } },
-  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 38, def: 18, reward: { money: 94 } },
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 43, def: 15, reward: { money: 80 } },
+  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 35, def: 18, reward: { money: 94 } },
   { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 42, def: 12, reward: { money: 85 }, isPaired: true }
 ];
 
@@ -140,7 +140,7 @@ var allyDefs = [
              desc: "對單體造成 ATK×2 點傷害（冷卻 3 回合）",
              isAoe: false,   multiplier: 2,   cooldown: 3 } },
   { id: "knight", name: "聖騎士", icon: "⚔️",
-    hp: 130, maxHp: 130, atk: 14, def: 15, price: 100,
+    hp: 130, maxHp: 130, atk: 14, def: 20, price: 100,
     skill: { id: "holy_guard", name: "護衛",     icon: "🔰",
              desc: "本回合替玩家承受敵人攻擊（以自身 DEF 減傷，冷卻 3 回合）",
              isTaunt: true,  multiplier: 0,   cooldown: 3 } }

@@ -296,7 +296,7 @@ var pendingSkillId    = null;  // 等待目標選擇的技能 ID
 var pendingHealTarget = null;  // 治療術的目標（null=玩家, ally obj=同伴）
 var shopUnlocked      = false;
 var shopPurchaseCounts = {};  // { itemName: purchaseCount } for price scaling
-var STAT_CAP = { atk: 40, def: 30 };
+var STAT_CAP = { atk: 40, def: 25 };
 var isPlayerDefending = false;
 var gameOver          = false;
 
