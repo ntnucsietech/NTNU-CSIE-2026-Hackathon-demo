@@ -44,18 +44,18 @@ var playerStats = {
 
 // ── 敵人（A 區 Tier 1） ───────────────────────────────────────
 var enemies = [
-  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 13 } },
-  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 18 } },
-  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 19 } },
-  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 16 } }
+  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 20 } },
+  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 25 } },
+  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 26 } },
+  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 23 } }
 ];
 
 // ── 敵人（B 區 Tier 2）────────────────────────────────────────
 var enemiesTier2 = [
-  { name: "魔法師",   hp: 220, maxHp: 220, atk: 19, def: 10, reward: { money: 52 } },
-  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 75 }, isMiniBarrier: true },
-  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 58 } },
-  { name: "狼人雙煞", hp: 100, maxHp: 100, atk: 21, def:  5, reward: { money: 62 }, isPaired: true }
+  { name: "魔法師",   hp: 220, maxHp: 220, atk: 19, def: 10, reward: { money: 67 } },
+  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true },
+  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
+  { name: "狼人雙煞", hp: 100, maxHp: 100, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
 ];
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────

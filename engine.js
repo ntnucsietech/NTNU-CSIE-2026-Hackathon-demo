@@ -932,7 +932,6 @@ function buyShopItem(item) {
     if (item.effect.reviveAlly) {
       var deadAllies = currentAllies.filter(function(a) { return a.knockedOut; });
       if (deadAllies.length === 0) { showShopMessage("目前沒有陣亡的同伴！"); return; }
-      updatePlayerMoney(-item.price);
       var revived = deadAllies[0];
       revived.hp = Math.max(1, Math.floor(revived.maxHp / 2));
       revived.knockedOut = false;
