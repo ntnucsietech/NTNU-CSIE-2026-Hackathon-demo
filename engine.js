@@ -296,6 +296,7 @@ var pendingSkillId    = null;  // 等待目標選擇的技能 ID
 var pendingHealTarget = null;  // 治療術的目標（null=玩家, ally obj=同伴）
 var shopUnlocked      = false;
 var shopPurchaseCounts = {};  // { itemName: purchaseCount } for price scaling
+var STAT_CAP = { atk: 40, def: 30 };
 var isPlayerDefending = false;
 var gameOver          = false;
 
@@ -951,10 +952,12 @@ function renderShopCard(item, container) {
   left.appendChild(nm); left.appendChild(ds);
 
   var right = document.createElement("div"); right.className = "shop-card-right";
+  var capped = isStatCapped(item);
   var scaledPrice = getScaledPrice(item);
   var pr = document.createElement("div"); pr.className = "shop-card-price";
-  pr.textContent = "💰 " + scaledPrice + (shopPurchaseCounts[item.name] ? " (×" + (shopPurchaseCounts[item.name] + 1) + ")" : "");
+  pr.textContent = capped ? "🚫 已達上限" : ("💰 " + scaledPrice + (shopPurchaseCounts[item.name] ? " (×" + (shopPurchaseCounts[item.name] + 1) + ")" : ""));
   var btn = document.createElement("button"); btn.className = "btn btn-shop"; btn.textContent = "購買";
+  btn.disabled = capped;
   btn.onclick = function() { buyShopItem(item); openShop(); };
   right.appendChild(pr); right.appendChild(btn);
 
@@ -1003,12 +1006,21 @@ function renderCraftCard(skill, container) {
   container.appendChild(card);
 }
 
+function isStatCapped(item) {
+  if (item.effect.atk && currentPlayer.atk >= STAT_CAP.atk) return true;
+  if (item.effect.def && currentPlayer.def >= STAT_CAP.def) return true;
+  return false;
+}
+
 function getScaledPrice(item) {
   var n = shopPurchaseCounts[item.name] || 0;
   return Math.round(item.price * Math.pow(1.15, n));
 }
 
 function buyShopItem(item) {
+  if (isStatCapped(item)) {
+    showShopMessage("❌ 已達上限，無法繼續升級！"); return;
+  }
   var price = getScaledPrice(item);
   if (currentPlayer.money < price) {
     showShopMessage("金幣不足！需要 " + price + " 金幣。"); return;

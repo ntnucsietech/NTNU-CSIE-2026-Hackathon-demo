@@ -135,7 +135,7 @@ var allyDefs = [
              desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
              isAoe: true,    multiplier: 1,   cooldown: 2 } },
   { id: "wizard", name: "法師",   icon: "🧙",
-    hp: 55, maxHp: 55, atk: 35, def: 2, price: 100,
+    hp: 55, maxHp: 55, atk: 22, def: 2, price: 100,
     skill: { id: "blizzard",   name: "冰矛",    icon: "❄️",
              desc: "對單體造成 ATK×2 點傷害（冷卻 3 回合）",
              isAoe: false,   multiplier: 2,   cooldown: 3 } },
