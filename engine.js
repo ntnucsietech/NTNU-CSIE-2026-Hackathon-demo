@@ -1696,6 +1696,7 @@ function buyAlly(def) {
     id: def.id, name: def.name, icon: def.icon,
     hp: def.maxHp, maxHp: def.maxHp,
     atk: def.atk, def: def.def,
+    critChance: def.critChance || 0,
     skill: def.skill, skillCooldown: 0, knockedOut: false,
     upgrades: { atk: 0, def: 0, maxHp: 0 }
   });
