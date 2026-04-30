@@ -1668,7 +1668,7 @@ function upgradeAlly(allyId, stat) {
 
   var baseCosts  = { atk: 30, def: 25, maxHp: 35 };
   var perLevels  = { atk: 20, def: 15, maxHp: 20 };
-  var gains      = { atk: 3,  def: 2,  maxHp: 20 };
+  var gains      = { atk: 3,  def: 3,  maxHp: 20 };
   var statNames  = { atk: "ATK", def: "DEF", maxHp: "最大HP" };
 
   var cost = baseCosts[stat] + level * perLevels[stat];
