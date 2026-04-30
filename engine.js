@@ -295,6 +295,7 @@ var blackKnightExposed = false; // 黑騎士全力突擊後弱點暴露（玩家
 var pendingSkillId    = null;  // 等待目標選擇的技能 ID
 var pendingHealTarget = null;  // 治療術的目標（null=玩家, ally obj=同伴）
 var shopUnlocked      = false;
+var shopPurchaseCounts = {};  // { itemName: purchaseCount } for price scaling
 var isPlayerDefending = false;
 var gameOver          = false;
 
@@ -950,9 +951,11 @@ function renderShopCard(item, container) {
   left.appendChild(nm); left.appendChild(ds);
 
   var right = document.createElement("div"); right.className = "shop-card-right";
-  var pr = document.createElement("div"); pr.className = "shop-card-price"; pr.textContent = "💰 " + item.price;
+  var scaledPrice = getScaledPrice(item);
+  var pr = document.createElement("div"); pr.className = "shop-card-price";
+  pr.textContent = "💰 " + scaledPrice + (shopPurchaseCounts[item.name] ? " (×" + (shopPurchaseCounts[item.name] + 1) + ")" : "");
   var btn = document.createElement("button"); btn.className = "btn btn-shop"; btn.textContent = "購買";
-  btn.onclick = function() { buyShopItem(item); };
+  btn.onclick = function() { buyShopItem(item); openShop(); };
   right.appendChild(pr); right.appendChild(btn);
 
   card.appendChild(left); card.appendChild(right);
@@ -1000,11 +1003,18 @@ function renderCraftCard(skill, container) {
   container.appendChild(card);
 }
 
+function getScaledPrice(item) {
+  var n = shopPurchaseCounts[item.name] || 0;
+  return Math.round(item.price * Math.pow(1.15, n));
+}
+
 function buyShopItem(item) {
-  if (currentPlayer.money < item.price) {
-    showShopMessage("金幣不足！需要 " + item.price + " 金幣。"); return;
+  var price = getScaledPrice(item);
+  if (currentPlayer.money < price) {
+    showShopMessage("金幣不足！需要 " + price + " 金幣。"); return;
   }
-  updatePlayerMoney(-item.price);
+  updatePlayerMoney(-price);
+  shopPurchaseCounts[item.name] = (shopPurchaseCounts[item.name] || 0) + 1;
   if (!item.isConsumable) {
     if (item.effect.reviveAlly) {
       var deadAllies = currentAllies.filter(function(a) { return a.knockedOut; });
@@ -1687,9 +1697,15 @@ function dismissAlly(allyId) {
     if (currentAllies[i].id === allyId) { idx = i; break; }
   }
   if (idx === -1) return;
-  var name = currentAllies[idx].icon + " " + currentAllies[idx].name;
+  var ally = currentAllies[idx];
+  var name = ally.icon + " " + ally.name;
+  var refund = 0;
+  for (var j = 0; j < allyDefs.length; j++) {
+    if (allyDefs[j].id === allyId) { refund = allyDefs[j].price; break; }
+  }
   currentAllies.splice(idx, 1);
-  showShopMessage("👋 「" + name + "」已離隊。");
+  if (refund > 0) updatePlayerMoney(refund);
+  showShopMessage("👋 「" + name + "」已離隊，退還 " + refund + " 金幣。");
   openShop();
 }
 
@@ -1948,6 +1964,7 @@ function restartGame() {
   isPlayerDefending     = false;
   playerSkillCooldowns  = {};
   playerAtkDebuffTurns  = 0;
+  shopPurchaseCounts    = {};
 
   updateHUD(); renderMap(); showScreen("screen-map");
 }
