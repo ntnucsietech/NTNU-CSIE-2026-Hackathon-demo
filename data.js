@@ -21,7 +21,7 @@ var MAP_HEIGHT = 27;
 var MAP_SEED   = 42;   // 改這個數字可以換一張固定地圖
 
 // ── 敵人數量 ─────────────────────────────────────────────────
-var ENEMY_COUNT = 15;  // 三區合計（A:7, B:4, C:4）
+var ENEMY_COUNT = 21;  // 三區合計（A:7, B:7, C:7）
 var CHEST_COUNT = 11;
 
 // ── 出生點 ────────────────────────────────────────────────────
@@ -54,6 +54,7 @@ var enemies = [
 var enemiesTier2 = [
   { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 67 } },
   { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true },
+  { name: "黑騎士",   hp: 200, maxHp: 200, atk: 20, def: 14, reward: { money: 75 } },
   { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
   { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
 ];
@@ -68,18 +69,16 @@ var enemiesTier3 = [
 // ── 最終 Boss ─────────────────────────────────────────────────
 // HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
 var finalBoss = {
-  name: "黑暗魔王", hp: 1000, maxHp: 1000, atk: 36, def: 20,
+  name: "黑暗魔王", hp: 1200, maxHp: 1000, atk: 40, def: 20,
   reward: { money: 150 }
 };
 
 // ── 寶箱獎勵 ──────────────────────────────────────────────────
 var chestRewards = [
-  { money: 18,  message: "你找到了 18 枚金幣！" },
-  { hp:    15,  message: "你喝下了恢復藥水，回復了 15 點血量！" },
+  { money: 25,  message: "你找到了 25 枚金幣！" },
   { atk:   3,   message: "你找到了力量秘藥，攻擊力永久提升 3！" },
   { def:   2,   message: "你找到了盾牌碎片，防禦力永久提升 2！" },
-  { money: 28,  message: "大寶箱！你找到了 28 枚金幣！" },
-  { hp:    25,  message: "你找到了生命水晶，回復了 25 點血量！" },
+  { money: 35,  message: "大寶箱！你找到了 35 枚金幣！" },
   { reviveAlly: true, message: "你找到了友軍復活藥水！" }
 ];
 

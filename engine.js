@@ -175,10 +175,10 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
   }
 
   // 散布敵人（分區、分難度）
-  var ec = (typeof ENEMY_COUNT !== "undefined") ? ENEMY_COUNT : 15;
-  var cntA = Math.floor(ec * 7 / 15);  // =7 for ec=15
-  var cntB = Math.floor(ec * 4 / 15);  // =4 for ec=15
-  var cntC = ec - cntA - cntB;          // =4 for ec=15
+  var ec = (typeof ENEMY_COUNT !== "undefined") ? ENEMY_COUNT : 21;
+  var cntA = Math.floor(ec / 3);        // =7 for ec=21
+  var cntB = Math.floor(ec / 3);        // =7 for ec=21
+  var cntC = ec - cntA - cntB;          // =7 for ec=21
 
   var candA = secA.filter(function(c) {
     return grid[c.y][c.x] === MAP_TILE.EMPTY &&
@@ -190,6 +190,22 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
   shuffleSeeded(candA, rng);
   shuffleSeeded(candB, rng);
   shuffleSeeded(candC, rng);
+
+  // 將上下半部候選格交錯排列，避免因固定種子導致敵人集中在地圖上半部
+  var midY = Math.floor(H / 2);
+  function interleaveHalves(arr) {
+    var top = [], bot = [];
+    for (var i = 0; i < arr.length; i++) (arr[i].y < midY ? top : bot).push(arr[i]);
+    var out = [];
+    for (var i = 0; i < Math.max(top.length, bot.length); i++) {
+      if (i < bot.length) out.push(bot[i]);
+      if (i < top.length) out.push(top[i]);
+    }
+    return out;
+  }
+  candA = interleaveHalves(candA);
+  candB = interleaveHalves(candB);
+  candC = interleaveHalves(candC);
 
   for (var k = 0; k < cntA && k < candA.length; k++) grid[candA[k].y][candA[k].x] = MAP_TILE.ENEMY;
   for (var k = 0; k < cntB && k < candB.length; k++) grid[candB[k].y][candB[k].x] = MAP_TILE.ENEMY;
@@ -1017,10 +1033,6 @@ function startCombat() {
   var enemyImg = document.getElementById("battle-enemy-img");
   if (enemyImg) enemyImg.src = currentEnemy.isFinalBoss ? "assets/boss.png" : "assets/enemy.png";
 
-  // 第二精靈（雙人出場時）
-  var sprite2 = document.getElementById("combat-enemy-sprite-2");
-  if (sprite2) sprite2.style.display = isPaired ? "flex" : "none";
-
   document.getElementById("combat-player-name").textContent = currentPlayer.name;
 
   var ptDisplay = document.getElementById("press-turn-display");
@@ -1054,11 +1066,36 @@ function startCombat() {
 }
 
 function updateCombatEnemyHp() {
-  var pct = currentEnemy.hp / currentEnemy.maxHp * 100;
-  var bar = document.getElementById("enemy-hp-bar-fill");
-  if (bar) bar.style.width = pct + "%";
-  var num = document.getElementById("enemy-hp-num");
-  if (num) num.textContent = currentEnemy.hp + " / " + currentEnemy.maxHp;
+  var isPaired = activeClones.length > 0 && !savedBoss;
+
+  var sprite2  = document.getElementById("combat-enemy-sprite-2");
+  var hpRow2   = document.getElementById("enemy-hp-row-2");
+  var bar1     = document.getElementById("enemy-hp-bar-fill");
+  var num1     = document.getElementById("enemy-hp-num");
+  var label1   = document.getElementById("enemy-hp-label-1");
+  var bar2     = document.getElementById("enemy-hp-bar-fill-2");
+  var num2     = document.getElementById("enemy-hp-num-2");
+  var label2   = document.getElementById("enemy-hp-label-2");
+
+  if (isPaired && activeClones.length >= 2) {
+    var c0 = activeClones[0], c1 = activeClones[1];
+    if (bar1)   bar1.style.width  = (c0.hp / c0.maxHp * 100) + "%";
+    if (num1)   num1.textContent  = c0.hp + " / " + c0.maxHp;
+    if (label1) label1.textContent = "①";
+    if (bar2)   bar2.style.width  = (c1.hp / c1.maxHp * 100) + "%";
+    if (num2)   num2.textContent  = c1.hp + " / " + c1.maxHp;
+    if (label2) label2.textContent = "②";
+    if (hpRow2)  hpRow2.style.display  = "block";
+    if (sprite2) sprite2.style.display = "flex";
+  } else {
+    var pct = currentEnemy.hp / currentEnemy.maxHp * 100;
+    if (bar1)   bar1.style.width   = pct + "%";
+    if (num1)   num1.textContent   = currentEnemy.hp + " / " + currentEnemy.maxHp;
+    if (label1) label1.textContent = "HP";
+    if (hpRow2)  hpRow2.style.display  = "none";
+    if (sprite2) sprite2.style.display = "none";
+  }
+
   updateCombatHint();
 }
 
@@ -1279,6 +1316,9 @@ function showAllyActionFor(live, idx, callback) {
   var panel = document.getElementById("ally-action-panel");
   if (!panel) {
     executeAllyAction(ally, "attack");
+    if (currentEnemy && currentEnemy.hp <= 0 && activeClones.length === 0) {
+      callback(); return;
+    }
     setTimeout(function() { showAllyActionFor(live, idx + 1, callback); }, 300);
     return;
   }
@@ -1294,6 +1334,11 @@ function showAllyActionFor(live, idx, callback) {
     var allBtns = btns.querySelectorAll("button");
     for (var k = 0; k < allBtns.length; k++) allBtns[k].disabled = true;
     executeAllyAction(ally, action);
+    if (currentEnemy && currentEnemy.hp <= 0 && activeClones.length === 0) {
+      hideAllyPanel();
+      setTimeout(function() { callback(); }, 400);
+      return;
+    }
     setTimeout(function() { showAllyActionFor(live, idx + 1, callback); }, 400);
   }
 
@@ -1579,6 +1624,27 @@ function runNextEnemyTurn() {
       logMessage("🛡️ 防禦/護盾！" + cloneLabel + "合擊削半，共受 " + totalDmg + " 點傷害！");
     } else {
       logMessage("🌑 " + activeClones.length + " 個「" + cloneLabel + "」同時攻擊！共造成 " + totalDmg + " 點傷害！");
+    }
+    var pairedTaunt = knightTauntActive;
+    knightTauntActive = false;
+    if (pairedTaunt && totalDmg > 0) {
+      var knightAlly = null;
+      for (var ki = 0; ki < currentAllies.length; ki++) {
+        if (currentAllies[ki].id === "knight" && !currentAllies[ki].knockedOut) {
+          knightAlly = currentAllies[ki]; break;
+        }
+      }
+      if (knightAlly) {
+        var ktDmg = Math.max(1, totalDmg - (knightAlly.def || 0));
+        knightAlly.hp = Math.max(0, knightAlly.hp - ktDmg);
+        logMessage("🔰 「" + knightAlly.name + "」挺身護衛，承受了 " + ktDmg + " 點傷害！");
+        if (knightAlly.hp <= 0) {
+          knightAlly.knockedOut = true;
+          logMessage("💔 「" + knightAlly.name + "」力竭倒下！");
+        }
+        updateAllyHpArea();
+        totalDmg = 0;
+      }
     }
     if (totalDmg > 0) updatePlayerHp(-totalDmg);
     if (currentPlayer.hp <= 0) {
