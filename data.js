@@ -68,7 +68,7 @@ var enemiesTier3 = [
 // ── 最終 Boss ─────────────────────────────────────────────────
 // HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
 var finalBoss = {
-  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 50, def: 42,
+  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 53, def: 42,
   reward: { money: 150 }
 };
 
@@ -119,9 +119,6 @@ var shopItems = [
   // 同伴復活（永久，立即選擇目標）
   { name: "友軍復活藥水", price: 50, effect: { reviveAlly: true },
     desc: "復活一名陣亡的同伴（恢復 50% HP）", isConsumable: false },
-  // 同伴強化（永久，立即提升所有同伴 ATK+5）
-  { name: "同伴強化石", price: 30, effect: { allAllyAtk: 5 },
-    desc: "立即提升所有同伴 ATK +5（永久）", isConsumable: false },
   // 同伴治癒（消耗品，戰鬥中治療 HP 最低的同伴）
   { name: "同伴治癒藥水", price: 18, effect: { allyHeal: 40 },
     desc: "戰鬥中使用：治療 HP 最低的同伴 40 HP", isConsumable: true }
@@ -140,7 +137,7 @@ var allyDefs = [
              desc: "對單體造成 ATK×2 點傷害（冷卻 3 回合）",
              isAoe: false,   multiplier: 2,   cooldown: 3 } },
   { id: "knight", name: "聖騎士", icon: "⚔️",
-    hp: 130, maxHp: 130, atk: 14, def: 20, price: 100,
+    hp: 130, maxHp: 130, atk: 14, def: 26, price: 100,
     skill: { id: "holy_guard", name: "護衛",     icon: "🔰",
              desc: "本回合替玩家承受敵人攻擊（以自身 DEF 減傷，冷卻 3 回合）",
              isTaunt: true,  multiplier: 0,   cooldown: 3 } }

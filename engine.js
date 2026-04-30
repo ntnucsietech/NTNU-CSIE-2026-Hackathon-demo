@@ -296,7 +296,7 @@ var pendingSkillId    = null;  // 等待目標選擇的技能 ID
 var pendingHealTarget = null;  // 治療術的目標（null=玩家, ally obj=同伴）
 var shopUnlocked      = false;
 var shopPurchaseCounts = {};  // { itemName: purchaseCount } for price scaling
-var STAT_CAP = { atk: 40, def: 25 };
+var STAT_CAP = { atk: 40, def: 25, hp: 160};
 var isPlayerDefending = false;
 var gameOver          = false;
 
@@ -1007,8 +1007,9 @@ function renderCraftCard(skill, container) {
 }
 
 function isStatCapped(item) {
-  if (item.effect.atk && currentPlayer.atk >= STAT_CAP.atk) return true;
-  if (item.effect.def && currentPlayer.def >= STAT_CAP.def) return true;
+  if (item.effect.atk   && currentPlayer.atk   >= STAT_CAP.atk) return true;
+  if (item.effect.def   && currentPlayer.def   >= STAT_CAP.def) return true;
+  if (item.effect.maxHp && currentPlayer.maxHp >= STAT_CAP.hp)  return true;
   return false;
 }
 
@@ -1668,7 +1669,7 @@ function upgradeAlly(allyId, stat) {
 
   var baseCosts  = { atk: 30, def: 25, maxHp: 35 };
   var perLevels  = { atk: 20, def: 15, maxHp: 20 };
-  var gains      = { atk: 3,  def: 3,  maxHp: 20 };
+  var gains      = { atk: 5,  def: 3,  maxHp: 20 };
   var statNames  = { atk: "ATK", def: "DEF", maxHp: "最大HP" };
 
   var cost = baseCosts[stat] + level * perLevels[stat];
