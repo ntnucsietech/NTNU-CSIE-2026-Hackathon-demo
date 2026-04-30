@@ -130,10 +130,10 @@ var shopItems = [
 // ── 同伴定義（可在商店招募，最多 2 人） ──────────────────────
 var allyDefs = [
   { id: "archer", name: "弓箭手", icon: "🏹",
-    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80, critChance: 0.35,
+    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80, critChance: 0.5,
     skill: { id: "volley",     name: "箭雨",    icon: "🌧️",
              desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
-             isAoe: true,    multiplier: 1,   cooldown: 3 } },
+             isAoe: true,    multiplier: 1,   cooldown: 2 } },
   { id: "wizard", name: "法師",   icon: "🧙",
     hp: 55, maxHp: 55, atk: 35, def: 2, price: 100,
     skill: { id: "blizzard",   name: "冰矛",    icon: "❄️",

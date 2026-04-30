@@ -1139,10 +1139,8 @@ function startCombat() {
 }
 
 function dealDmgToEnemy(target, dmg) {
-  if (target.noOneShot && target.hp > 1) {
-    var newHp = Math.max(1, target.hp - dmg);
-    if (newHp === 1 && target.hp > 1) logMessage("🛡️ 「" + target.name + "」以鋼鐵意志撐住，HP 剩 1！");
-    target.hp = newHp;
+  if (target.isMiniBarrier) {
+    target.hp = Math.max(0, target.hp - 1);
   } else {
     target.hp = Math.max(0, target.hp - dmg);
   }
@@ -1529,10 +1527,25 @@ function executeAllyAction(ally, action) {
     if (skill.isShield) {
       allyShieldActive = true;
       logMessage(ally.icon + " 「" + ally.name + "」使用「" + skill.name + "」！本回合傷害減半！");
+      return;
     }
     if (skill.isTaunt) {
       knightTauntActive = true;
       logMessage(ally.icon + " 「" + ally.name + "」使用「" + skill.name + "」！本回合替玩家承受攻擊！");
+      return;
+    }
+    // 單體傷害技能（如冰矛）
+    if (skill.multiplier && skill.multiplier > 0) {
+      var target = activeClones.length > 0 ? activeClones[0] : currentEnemy;
+      var dmg = Math.max(1, Math.floor(ally.atk * skill.multiplier) - (target.def || 0));
+      dealDmgToEnemy(target, dmg);
+      logMessage(ally.icon + " 「" + ally.name + "」使用「" + skill.name + "」！對「" + target.name + "」造成 " + dmg + " 點傷害！");
+      if (target.hp <= 0 && activeClones.length > 0) {
+        var ki = activeClones.indexOf(target);
+        if (ki !== -1) activeClones.splice(ki, 1);
+        if (activeClones.length > 0) currentEnemy = activeClones[0];
+      }
+      updateCombatEnemyHp();
     }
   }
 }
