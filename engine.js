@@ -180,51 +180,67 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
   var cntB = Math.floor(ec / 3);
   var cntC = ec - cntA - cntB;
 
-  // 網格分佈放怪：把區域切成 count 個格子，每格隨機取一個空格放怪
-  // 同時強制最小間距，防止兩隻怪靠太近
+  // 網格分佈放怪：根據區域長寬比切成格子，每格隨機取一個空格放怪
+  // 使用浮點邊界讓每格面積完全相等；同時強制最小間距
   var MIN_DIST = 5;
   function placeZoneEnemies(pool, count, xMin, xMax) {
     if (count <= 0 || pool.length === 0) return;
-    var cols   = Math.ceil(Math.sqrt(count));
-    var rows   = Math.ceil(count / cols);
-    var cellW  = Math.max(1, Math.floor((xMax - xMin) / cols));
-    var cellH  = Math.max(1, Math.floor((H - 2) / rows));
-    var placed = [];
+    var zW = xMax - xMin;
+    var zH = H - 2;
+    // 長寬比感知：確保至少 2 欄，讓水平也有分散
+    var cols = Math.max(2, Math.round(Math.sqrt(count * zW / zH)));
+    var rows = Math.ceil(count / cols);
+    while (cols * rows < count) rows++;
 
-    // 隨機打亂格子順序，避免固定從左上開始取
+    // 打亂格子順序，避免永遠從同一角落開始
     var cells = [];
     for (var r = 0; r < rows; r++)
       for (var c = 0; c < cols; c++)
         cells.push([r, c]);
     shuffleSeeded(cells, rng);
 
+    var placed = [];
     for (var i = 0; i < cells.length && placed.length < count; i++) {
-      var r = cells[i][0], c = cells[i][1];
-      var cx1 = xMin + c * cellW,          cx2 = Math.min(xMax, cx1 + cellW);
-      var cy1 = 1    + r * cellH,          cy2 = Math.min(H - 2, cy1 + cellH);
+      var ci = cells[i][1], ri = cells[i][0];
+      // 浮點邊界，每格面積相等
+      var cx1 = xMin + ci       * zW / cols;
+      var cx2 = xMin + (ci + 1) * zW / cols;
+      var cy1 = 1    + ri       * zH / rows;
+      var cy2 = 1    + (ri + 1) * zH / rows;
 
-      // 收集此格子內的有效候選格（仍為 EMPTY，且滿足最小間距）
-      var cands = [], fallback = [];
+      var cands = [], fb = [];
       for (var j = 0; j < pool.length; j++) {
         var p = pool[j];
         if (p.x < cx1 || p.x >= cx2 || p.y < cy1 || p.y >= cy2) continue;
         if (grid[p.y][p.x] !== MAP_TILE.EMPTY) continue;
         var near = false;
-        for (var k = 0; k < placed.length; k++) {
-          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) {
-            near = true; break;
-          }
-        }
-        if (!near) cands.push(p);
-        else        fallback.push(p);
+        for (var k = 0; k < placed.length; k++)
+          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) { near = true; break; }
+        (near ? fb : cands).push(p);
       }
-
-      // 距離限制找不到時退而求其次用 fallback
-      var pick_pool = cands.length > 0 ? cands : fallback;
-      if (pick_pool.length === 0) continue;
-      var pick = pick_pool[Math.floor(rng() * pick_pool.length)];
+      var pp = cands.length > 0 ? cands : fb;
+      if (pp.length === 0) continue;
+      var pick = pp[Math.floor(rng() * pp.length)];
       grid[pick.y][pick.x] = MAP_TILE.ENEMY;
       placed.push(pick);
+    }
+
+    // 若網格不夠用（全是牆）則從整個 pool 補足剩餘數量
+    if (placed.length < count) {
+      var rest = [];
+      for (var j = 0; j < pool.length; j++) {
+        var p = pool[j];
+        if (grid[p.y][p.x] !== MAP_TILE.EMPTY) continue;
+        var near = false;
+        for (var k = 0; k < placed.length; k++)
+          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) { near = true; break; }
+        if (!near) rest.push(p);
+      }
+      shuffleSeeded(rest, rng);
+      for (var j = 0; j < rest.length && placed.length < count; j++) {
+        grid[rest[j].y][rest[j].x] = MAP_TILE.ENEMY;
+        placed.push(rest[j]);
+      }
     }
   }
 
@@ -595,6 +611,20 @@ function onUseItem(idx) {
   var eff  = item.effect;
   var msgs = [];
 
+  if (eff.allyHeal) {
+    var wounded = null;
+    for (var ai = 0; ai < currentAllies.length; ai++) {
+      var a = currentAllies[ai];
+      if (!a.knockedOut && (wounded === null || a.hp < wounded.hp)) wounded = a;
+    }
+    if (wounded) {
+      wounded.hp = Math.min(wounded.maxHp, wounded.hp + eff.allyHeal);
+      updateAllyHpArea();
+      msgs.push(wounded.icon + "「" + wounded.name + "」回復 " + eff.allyHeal + " HP");
+    } else {
+      msgs.push("無存活同伴");
+    }
+  }
   if (eff.hp > 0) {
     updatePlayerHp(eff.hp);
     msgs.push("回復 " + eff.hp + " HP");
@@ -983,6 +1013,13 @@ function buyShopItem(item) {
       revived.hp = Math.max(1, Math.floor(revived.maxHp / 2));
       revived.knockedOut = false;
       showShopMessage("✨ 「" + revived.icon + " " + revived.name + "」已復活！（HP:" + revived.hp + "）");
+      document.getElementById("shop-player-money").textContent = currentPlayer.money;
+      return;
+    }
+    if (item.effect.allAllyAtk) {
+      if (currentAllies.length === 0) { showShopMessage("目前沒有同伴！"); return; }
+      for (var ai = 0; ai < currentAllies.length; ai++) currentAllies[ai].atk += item.effect.allAllyAtk;
+      showShopMessage("💪 所有同伴 ATK +" + item.effect.allAllyAtk + "！");
       document.getElementById("shop-player-money").textContent = currentPlayer.money;
       return;
     }
@@ -1425,8 +1462,10 @@ function executeAllyAction(ally, action) {
       logMessage(ally.icon + " 「" + ally.name + "」沒有目標。"); return;
     }
     var dmg = Math.max(1, ally.atk - (target.def || 0));
+    var critMsg = "";
+    if (ally.critChance && Math.random() < ally.critChance) { dmg *= 2; critMsg = " 💥爆擊！"; }
     dealDmgToEnemy(target, dmg);
-    logMessage(ally.icon + " 「" + ally.name + "」攻擊「" + target.name + "」，造成 " + dmg + " 點傷害！" + (target.isMiniBarrier ? " 🛡️（格擋中）" : ""));
+    logMessage(ally.icon + " 「" + ally.name + "」攻擊「" + target.name + "」，造成 " + dmg + " 點傷害！" + critMsg + (target.isMiniBarrier ? " 🛡️（格擋中）" : ""));
     if (target.hp <= 0 && activeClones.length > 0) {
       var ki = activeClones.indexOf(target);
       if (ki !== -1) {
@@ -1568,7 +1607,8 @@ function renderAllyCard(def, container) {
   pr.textContent = "💰 " + def.price;
   var btn = document.createElement("button"); btn.className = "btn btn-shop";
   if (owned) {
-    btn.textContent = "已招募"; btn.disabled = true;
+    btn.textContent = "遣返"; btn.className = "btn btn-flee";
+    btn.onclick = (function(id) { return function() { dismissAlly(id); }; })(def.id);
   } else if (currentAllies.length >= 2) {
     btn.textContent = "隊伍已滿"; btn.disabled = true;
   } else {
@@ -1638,6 +1678,18 @@ function buyAlly(def) {
   });
   showShopMessage("✨ 「" + def.icon + " " + def.name + "」加入了隊伍！");
   document.getElementById("shop-player-money").textContent = currentPlayer.money;
+  openShop();
+}
+
+function dismissAlly(allyId) {
+  var idx = -1;
+  for (var i = 0; i < currentAllies.length; i++) {
+    if (currentAllies[i].id === allyId) { idx = i; break; }
+  }
+  if (idx === -1) return;
+  var name = currentAllies[idx].icon + " " + currentAllies[idx].name;
+  currentAllies.splice(idx, 1);
+  showShopMessage("👋 「" + name + "」已離隊。");
   openShop();
 }
 

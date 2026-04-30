@@ -21,7 +21,7 @@ var MAP_HEIGHT = 27;
 var MAP_SEED   = 42;   // 改這個數字可以換一張固定地圖
 
 // ── 敵人數量 ─────────────────────────────────────────────────
-var ENEMY_COUNT = 18;   // 三區合計（A:7, B:6, C:5）
+var ENEMY_COUNT = 7;    // 三區合計（A:2, B:2, C:3）
 var CHEST_COUNT = 11;
 
 // ── 出生點 ────────────────────────────────────────────────────
@@ -44,31 +44,31 @@ var playerStats = {
 
 // ── 敵人（A 區 Tier 1） ───────────────────────────────────────
 var enemies = [
-  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 20 } },
-  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 25 } },
-  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 26 } },
-  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 23 } }
+  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 15 } },
+  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 15 } },
+  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 15 } },
+  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 15 } }
 ];
 
 // ── 敵人（B 區 Tier 2）────────────────────────────────────────
 var enemiesTier2 = [
-  { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 67 } },
-  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true },
-  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
-  { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
+  { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 24 } },
+  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 24 }, isMiniBarrier: true, noOneShot: true },
+  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 24 } },
+  { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 24 }, isPaired: true }
 ];
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 80 } },
-  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 94 } },
-  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 85 }, isPaired: true }
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 29 } },
+  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 29 } },
+  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 29 }, isPaired: true }
 ];
 
 // ── 最終 Boss ─────────────────────────────────────────────────
 // HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
 var finalBoss = {
-  name: "黑暗魔王", hp: 1500, maxHp: 1500, atk: 50, def: 42,
+  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 50, def: 42,
   reward: { money: 150 }
 };
 
@@ -118,21 +118,27 @@ var shopItems = [
     desc: "戰鬥中使用：立即回復 50 HP", isConsumable: true },
   // 同伴復活（永久，立即選擇目標）
   { name: "友軍復活藥水", price: 50, effect: { reviveAlly: true },
-    desc: "復活一名陣亡的同伴（恢復 50% HP）", isConsumable: false }
+    desc: "復活一名陣亡的同伴（恢復 50% HP）", isConsumable: false },
+  // 同伴強化（永久，立即提升所有同伴 ATK+5）
+  { name: "同伴強化石", price: 30, effect: { allAllyAtk: 5 },
+    desc: "立即提升所有同伴 ATK +5（永久）", isConsumable: false },
+  // 同伴治癒（消耗品，戰鬥中治療 HP 最低的同伴）
+  { name: "同伴治癒藥水", price: 18, effect: { allyHeal: 40 },
+    desc: "戰鬥中使用：治療 HP 最低的同伴 40 HP", isConsumable: true }
 ];
 
 // ── 同伴定義（可在商店招募，最多 2 人） ──────────────────────
 var allyDefs = [
   { id: "archer", name: "弓箭手", icon: "🏹",
-    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80,
+    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80, critChance: 0.35,
     skill: { id: "volley",     name: "箭雨",    icon: "🌧️",
              desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
              isAoe: true,    multiplier: 1,   cooldown: 3 } },
   { id: "wizard", name: "法師",   icon: "🧙",
-    hp: 55, maxHp: 55, atk: 20, def: 2, price: 100,
-    skill: { id: "blizzard",   name: "冰風暴",  icon: "❄️",
-             desc: "攻擊全體敵人各造成 ATK×1.5 點傷害（冷卻 4 回合）",
-             isAoe: true,    multiplier: 1.5, cooldown: 4 } },
+    hp: 55, maxHp: 55, atk: 35, def: 2, price: 100,
+    skill: { id: "blizzard",   name: "冰矛",    icon: "❄️",
+             desc: "對單體造成 ATK×2 點傷害（冷卻 4 回合）",
+             isAoe: false,   multiplier: 2,   cooldown: 4 } },
   { id: "knight", name: "聖騎士", icon: "⚔️",
     hp: 130, maxHp: 130, atk: 14, def: 15, price: 100,
     skill: { id: "holy_guard", name: "護衛",     icon: "🔰",
