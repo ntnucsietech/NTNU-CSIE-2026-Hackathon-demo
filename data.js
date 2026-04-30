@@ -44,25 +44,25 @@ var playerStats = {
 
 // ── 敵人（A 區 Tier 1） ───────────────────────────────────────
 var enemies = [
-  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 15 } },
-  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 15 } },
-  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 15 } },
-  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 15 } }
+  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 22 } },
+  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 27 } },
+  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 28 } },
+  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 25 } }
 ];
 
 // ── 敵人（B 區 Tier 2）────────────────────────────────────────
 var enemiesTier2 = [
-  { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 24 } },
-  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 24 }, isMiniBarrier: true, noOneShot: true },
-  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 24 } },
-  { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 24 }, isPaired: true }
+  { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 67 } },
+  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true, noOneShot: true },
+  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
+  { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
 ];
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 29 } },
-  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 29 } },
-  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 29 }, isPaired: true }
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 80 } },
+  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 94 } },
+  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 85 }, isPaired: true }
 ];
 
 // ── 最終 Boss ─────────────────────────────────────────────────
