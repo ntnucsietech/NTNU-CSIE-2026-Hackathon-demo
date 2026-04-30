@@ -88,7 +88,7 @@ var skillDefs = [
   { id: "power_strike", name: "強力打擊", icon: "💥",
     desc: "造成 2× 傷害（冷卻 2 回合）", type: "innate",  cooldown: 2 },
   { id: "heal_magic",   name: "治療術",   icon: "💚",
-    desc: "戰鬥中恢復 25 HP（冷卻 3 回合）", type: "shop", price: 40, cooldown: 3 },
+    desc: "戰鬥中恢復 25 HP（無冷卻）", type: "shop", price: 40, cooldown: 0 },
   { id: "shield_bash",  name: "盾擊",     icon: "🛡️",
     desc: "防禦並造成 0.5× 傷害（冷卻 2 回合）", type: "shop", price: 35, cooldown: 2 },
   { id: "berserk",      name: "狂戰士",   icon: "😤",
