@@ -1,0 +1,737 @@
+/* ============================================================
+   style.css  ── 基礎樣式
+   ============================================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+  font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#screen-map,
+#screen-combat,
+#screen-shop,
+#screen-minigame,
+#screen-gameover,
+#screen-clear {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   迷宮地圖畫面
+   ══════════════════════════════════════════════════════════════ */
+
+#hud {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  background-color: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 12px;
+  padding: 8px 18px;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 680px;
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.hud-label { color: #a0a8c0; font-size: 12px; }
+
+#map-message {
+  background-color: rgba(15, 52, 96, 0.9);
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  border-radius: 8px;
+  padding: 8px 18px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  min-height: 36px;
+  text-align: center;
+  max-width: 680px;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* 視窗容器（9 格 × 60px = 540px） */
+#viewport {
+  width: 540px;
+  height: 540px;
+  max-width: 100%;
+  border: 3px solid #0f3460;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+#game-board {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  position: absolute;
+  top: 0; left: 0;
+  transition: transform 0.12s ease;
+}
+
+/* ── 單個格子 ────────────────────────────────────────────── */
+.tile {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.1s, opacity 0.3s;
+}
+
+/* 走廊縮窄效果：在可走格子內側加暗色陰影，模擬厚牆走廊感 */
+.tile--empty,
+.tile--player,
+.tile--chest,
+.tile--enemy,
+.tile--shop,
+.tile--minigame,
+.tile--door,
+.tile--boss {
+  box-shadow: inset 0 0 0 4px rgba(6, 10, 21, 0.75);
+}
+
+.tile--empty    { background-color: #1e2a45; }
+.tile--wall     { background-color: #0a0f1e; border: 1px solid #0d1526; }
+.tile--chest    { background-color: #1e2a45; cursor: pointer; }
+.tile--enemy    { background-color: #2a1e1e; }
+.tile--door     { background-color: #1e1a2a; }
+.tile--minigame { background-color: #1a2240; }
+.tile--shop     { background-color: #1a2a1e; }
+.tile--boss     { background-color: #2a0a0a; }
+
+.tile--player {
+  background-color: #1e2a45;
+  outline: 2px solid #4fc3f7;
+  z-index: 1;
+}
+
+.tile--hidden   { background-color: #050810; }
+.tile--explored { opacity: 0.35; }
+
+.sprite {
+  width: 48px; height: 48px;
+  object-fit: contain;
+  transition: transform 0.15s;
+}
+
+.tile-emoji {
+  font-size: 28px; line-height: 1;
+  transition: transform 0.15s;
+  user-select: none;
+}
+
+.tile:not(.tile--hidden):not(.tile--wall):hover .sprite,
+.tile:not(.tile--hidden):not(.tile--wall):hover .tile-emoji {
+  transform: scale(1.15);
+}
+
+#controls-hint {
+  margin-top: 10px;
+  color: #5a6a8a;
+  font-size: 13px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   戰鬥畫面
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 戰鬥過場動畫 ────────────────────────────────────────── */
+@keyframes combatSlideIn {
+  0%   { opacity: 0; transform: translateY(20px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+#screen-combat.combat-enter {
+  animation: combatSlideIn 0.38s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+#screen-combat {
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #0d0d1a;
+  padding: 0; gap: 0;
+}
+
+#combat-field {
+  width: 100%; max-width: 860px; height: 290px;
+  position: relative; flex-shrink: 0;
+  background: linear-gradient(180deg,
+    #1a2a4a 0%, #243555 40%,
+    #3d2e1a 60%, #2a1e0a 100%);
+  border-bottom: 4px solid #050810;
+  overflow: hidden;
+}
+
+#combat-field::before {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 38%;
+  background: linear-gradient(180deg, transparent 0%, rgba(50,35,10,0.5) 100%);
+  pointer-events: none;
+}
+
+.battle-info-card {
+  position: absolute;
+  background: rgba(235, 232, 215, 0.97);
+  border: 3px solid #333;
+  border-radius: 10px;
+  padding: 8px 14px 6px;
+  min-width: 195px;
+  color: #111;
+  z-index: 10;
+  box-shadow: 4px 4px 0 #666;
+}
+
+#combat-enemy-card { top: 20px; left: 16px; }
+#combat-player-card { bottom: 22px; right: 16px; }
+
+.battle-card-name { font-size: 15px; font-weight: bold; color: #111; margin-bottom: 5px; }
+#combat-enemy-card .battle-card-name { color: #8b0000; }
+#combat-player-card .battle-card-name { color: #003399; }
+
+.battle-hp-row { display: flex; align-items: center; gap: 6px; }
+.battle-hp-label { font-size: 11px; font-weight: bold; color: #444; width: 18px; }
+
+.battle-info-card .hp-bar-wrap {
+  flex: 1; background-color: #888; border-radius: 4px;
+  height: 12px; overflow: hidden; border: 1px solid #555;
+}
+
+.battle-info-card .hp-bar-fill {
+  height: 100%; border-radius: 4px;
+  transition: width 0.35s ease; min-width: 0;
+}
+
+.enemy-bar  { background: linear-gradient(90deg, #d32f2f, #ff5252); width: 100%; }
+.player-bar { background: linear-gradient(90deg, #2e7d32, #4caf50); width: 100%; }
+.battle-hp-num { font-size: 11px; color: #333; text-align: right; margin-top: 3px; }
+
+#combat-enemy-sprite {
+  position: absolute; top: 16px; right: 60px;
+  width: 130px; height: 130px;
+  display: flex; align-items: center; justify-content: center; z-index: 5;
+}
+
+#combat-enemy-sprite-2 {
+  position: absolute; top: 20px; right: 210px;
+  width: 120px; height: 120px;
+  display: flex; align-items: center; justify-content: center; z-index: 5;
+}
+
+#combat-hint {
+  position: absolute;
+  bottom: 8px; left: 50%; transform: translateX(-50%);
+  background: rgba(0, 0, 20, 0.78);
+  color: #ffe082;
+  font-size: 12px; font-weight: bold;
+  padding: 4px 14px; border-radius: 12px;
+  white-space: nowrap; pointer-events: none;
+  display: none; z-index: 15;
+  border: 1px solid rgba(255, 224, 130, 0.35);
+}
+
+#combat-player-sprite {
+  position: absolute; bottom: 36px; left: 44px;
+  width: 115px; height: 115px;
+  display: flex; align-items: center; justify-content: center; z-index: 5;
+}
+
+.battle-sprite {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 6px 4px rgba(0,0,0,0.6));
+}
+
+.enemy-sprite-img { animation: enemy-float 2.4s ease-in-out infinite; }
+
+@keyframes enemy-float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+.battle-fallback-emoji { font-size: 64px; line-height: 1; }
+
+/* ── Press Turn ─────────────────────────────────────────── */
+#press-turn-display {
+  display: flex; flex-direction: row; justify-content: space-between;
+  width: 100%; max-width: 860px;
+  background-color: #0a0f1e; border-bottom: 1px solid #0f3460;
+  padding: 6px 20px; font-size: 14px; flex-shrink: 0;
+}
+
+#pt-player-tokens { color: #4fc3f7; letter-spacing: 2px; }
+#pt-enemy-tokens  { color: #ff6b6b; letter-spacing: 2px; }
+
+/* ── 戰鬥面板 ─────────────────────────────────────────── */
+#combat-panel {
+  width: 100%; max-width: 860px;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 16px;
+  background-color: #16213e;
+  border-top: 3px solid #0f3460;
+  flex: 1;
+}
+
+#combat-log {
+  width: 100%;
+  background-color: #0a0f1e;
+  border: 2px solid #0f3460; border-radius: 8px;
+  padding: 10px 14px; height: 90px; overflow-y: auto;
+  font-size: 13px; color: #b0c4de; line-height: 1.6;
+}
+
+#combat-log p { margin-bottom: 4px; }
+
+#combat-buttons {
+  display: flex; flex-direction: row; gap: 10px; width: 100%;
+}
+
+/* 技能按鈕列 */
+#combat-skills {
+  display: flex; flex-direction: row; gap: 8px; width: 100%;
+  flex-wrap: wrap;
+}
+
+.btn:disabled {
+  opacity: 0.4; cursor: not-allowed; transform: none;
+}
+
+/* ── 金幣掉落動畫 ─────────────────────────────────────── */
+.coin-drop {
+  position: absolute;
+  color: #ffd700;
+  font-size: 18px;
+  font-weight: bold;
+  z-index: 20;
+  pointer-events: none;
+  animation: coin-float-up 1.1s ease-out forwards;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.9);
+}
+
+@keyframes coin-float-up {
+  0%   { transform: translateY(0px) scale(1);   opacity: 1; }
+  60%  { transform: translateY(-50px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-90px) scale(0.9); opacity: 0; }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   商店畫面
+   ══════════════════════════════════════════════════════════════ */
+
+#screen-shop { justify-content: center; background-color: #0a1a0a; }
+
+#shop-box {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  background-color: #102010;
+  border: 2px solid #2e7d32; border-radius: 16px;
+  padding: 24px 28px;
+  width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+}
+
+#shop-title     { color: #81c784; font-size: 22px; }
+#shop-money-display { color: #ffd700; font-size: 15px; }
+#shop-message   { color: #a5d6a7; font-size: 14px; min-height: 20px; }
+
+#shop-item-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+
+/* 商店分區標題 */
+.shop-section-title {
+  font-size: 13px; font-weight: bold;
+  color: #66bb6a; letter-spacing: 0.5px;
+  margin-top: 10px; margin-bottom: 2px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #2e7d32;
+}
+
+.shop-card {
+  display: flex; flex-direction: row; align-items: center;
+  justify-content: space-between;
+  background-color: #1b3a1b;
+  border: 1px solid #388e3c; border-radius: 10px;
+  padding: 8px 14px; gap: 10px;
+  transition: transform 0.15s;
+}
+
+.shop-card:hover { transform: scale(1.01); }
+
+/* 消耗品卡片：稍微不同邊框色 */
+.shop-card--consumable {
+  border-color: #ffd700;
+  background-color: #1e2a10;
+}
+
+/* 技能購買卡片 */
+.shop-card--skill {
+  border-color: #7e57c2;
+  background-color: #1a1a2e;
+}
+
+/* 技能合成卡片 */
+.shop-card--craft {
+  border-color: #ef6c00;
+  background-color: #1e1200;
+}
+
+.shop-card-left  { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.shop-card-right { display: flex; flex-direction: row; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.shop-card-name  { font-size: 14px; font-weight: bold; color: #c8e6c9; }
+.shop-card-desc  { font-size: 12px; color: #81c784; }
+.shop-card-recipe { font-size: 11px; color: #ffb74d; margin-top: 2px; }
+.shop-card-price { font-size: 13px; color: #ffd700; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   射擊小遊戲畫面
+   ══════════════════════════════════════════════════════════════ */
+
+#screen-minigame { justify-content: center; background-color: #000a1a; }
+
+#minigame-box {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; width: 100%; max-width: 660px;
+}
+
+#minigame-box h2 { font-size: 22px; color: #4fc3f7; }
+
+#mg-hud { display: flex; flex-direction: row; gap: 30px; font-size: 16px; color: #e0e0e0; }
+
+#mg-area {
+  width: 600px; height: 380px;
+  background-color: #0a1428;
+  border: 2px solid #1565c0; border-radius: 10px;
+  position: relative; overflow: hidden;
+  cursor: none;
+}
+
+#mg-crosshair {
+  position: absolute;
+  font-size: 28px; color: #f44336;
+  pointer-events: none; display: none;
+  line-height: 1; user-select: none;
+}
+
+.mg-enemy {
+  position: absolute;
+  width: 50px; height: 50px;
+  object-fit: contain; cursor: none;
+  transition: opacity 0.2s;
+}
+
+.mg-enemy:hover { transform: scale(1.1); }
+#mg-hint { color: #5a6a8a; font-size: 13px; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   對話框畫面
+   ══════════════════════════════════════════════════════════════ */
+
+#screen-dialogue {
+  display: flex; flex-direction: column;
+  width: 100vw; min-height: 100vh;
+  justify-content: flex-end; align-items: center;
+  background-color: rgba(5, 8, 16, 0.85);
+}
+
+#dialogue-box {
+  display: flex; flex-direction: column; gap: 14px;
+  background-color: #0d1b2a;
+  border: 3px solid #4a90d9; border-radius: 12px;
+  padding: 24px 32px;
+  width: 100%; max-width: 640px; margin-bottom: 48px;
+}
+
+#dialogue-speaker-name { color: #ffd700; font-size: 16px; font-weight: bold; min-height: 22px; }
+#dialogue-text-content { color: #e8e8e8; font-size: 17px; line-height: 1.8; min-height: 60px; }
+
+.btn-dialogue-next {
+  background-color: #1565c0; color: #fff;
+  flex: none; align-self: flex-end; padding: 10px 28px;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   Game Over & 通關畫面
+   ══════════════════════════════════════════════════════════════ */
+
+#screen-gameover { justify-content: center; background-color: #0d0000; }
+#screen-clear    { justify-content: center; background-color: #0a0d00; }
+
+#gameover-box, #clear-box {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 18px; text-align: center; padding: 40px;
+}
+
+#gameover-box h1 { font-size: 48px; color: #ef5350; }
+#clear-box h1    { font-size: 48px; color: #ffd700; }
+#gameover-box p, #clear-box p { font-size: 18px; color: #b0b0b0; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   通用按鈕樣式
+   ══════════════════════════════════════════════════════════════ */
+
+.btn {
+  padding: 10px 18px;
+  border: none; border-radius: 8px;
+  font-size: 14px; font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.12s;
+  flex: 1;
+}
+
+.btn:hover  { transform: scale(1.06); opacity: 0.9; }
+.btn:active { transform: scale(0.97); }
+
+.btn-attack { background-color: #c62828; color: #fff; }
+.btn-defend { background-color: #1565c0; color: #fff; }
+.btn-flee   { background-color: #4a4a4a; color: #fff; }
+
+.btn-close {
+  background-color: #333; color: #ccc;
+  flex: none; padding: 10px 28px;
+}
+
+.btn-shop {
+  background-color: #2e7d32; color: #fff;
+  flex: none; padding: 7px 14px; font-size: 13px;
+}
+
+.btn-restart {
+  background-color: #1565c0; color: #fff;
+  flex: none; font-size: 18px; padding: 14px 36px;
+}
+
+.btn-hud {
+  background-color: #2e7d32; color: #fff;
+  flex: none; padding: 6px 12px; font-size: 13px;
+  border-radius: 6px; margin-left: auto;
+}
+
+/* ── 技能按鈕 ─────────────────────────────────────────── */
+.btn-skill {
+  background-color: #4a148c;
+  color: #fff;
+  flex: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.btn-skill:hover:not(:disabled) { background-color: #6a1fb5; }
+
+.btn-skill--cd {
+  background-color: #2d2d2d;
+  color: #888;
+}
+
+/* ── 戰鬥背包道具欄 ───────────────────────────────────── */
+#combat-items {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid #1e3560;
+}
+
+.combat-items-label {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.btn-item {
+  background-color: #1a4a2a;
+  color: #a5d6a7;
+  border: 1px solid #2e7d32;
+  flex: none;
+  padding: 7px 12px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.btn-item:hover:not(:disabled) {
+  background-color: #2e7d32;
+  color: #fff;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   同伴行動面板
+   ══════════════════════════════════════════════════════════════ */
+
+#ally-action-panel {
+  background: linear-gradient(90deg, #0d1f3c, #162040);
+  border: 1px solid #2a4a8a;
+  border-radius: 10px;
+  padding: 8px 14px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+
+#ally-action-title {
+  font-size: 13px; font-weight: bold;
+  color: #90caf9; letter-spacing: 0.3px;
+}
+
+#ally-action-buttons {
+  display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;
+}
+
+/* ── 同伴 HP 列 ────────────────────────────────────────── */
+#ally-hp-area {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 10px; flex-wrap: wrap;
+  padding: 6px 2px;
+  border-top: 1px solid #1e3560;
+}
+
+.ally-hp-label-text {
+  font-size: 12px; color: #7a8aaa; flex-shrink: 0;
+}
+
+.ally-hp-card {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #1e3560; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; color: #c8d8f0;
+}
+
+.ally-hp-card.ally-knocked-out {
+  opacity: 0.4; border-color: #555;
+}
+
+.ally-mini-bar-wrap {
+  display: inline-block; width: 50px; height: 6px;
+  background: #2a3a5a; border-radius: 3px; overflow: hidden;
+  vertical-align: middle;
+}
+
+.ally-mini-bar-fill {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.ally-hp-num-small {
+  font-size: 11px; color: #7a9ac0;
+}
+
+/* ── 同伴商店卡片 ─────────────────────────────────────── */
+.shop-card--ally {
+  border-color: #1565c0;
+  background-color: #0d1a2e;
+}
+
+.ally-upgrade-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.btn-upgrade {
+  background: linear-gradient(135deg, #1a3a6a, #1e4d8c);
+  color: #a8d4ff;
+  border: 1px solid #2a5a9a;
+  border-radius: 6px;
+  padding: 4px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-upgrade:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1e4d8c, #2060b0);
+  color: #d0eaff;
+}
+
+.btn-upgrade:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   目標選擇面板
+   ══════════════════════════════════════════════════════════════ */
+
+#target-select-panel {
+  display: flex; flex-direction: column; gap: 8px;
+  background: linear-gradient(90deg, #1a200a, #202800);
+  border: 1px solid #6a8a00; border-radius: 10px;
+  padding: 8px 14px 10px;
+}
+
+#target-select-title {
+  font-size: 13px; font-weight: bold; color: #c8e080; letter-spacing: 0.3px;
+}
+
+#target-select-buttons {
+  display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   查看敵人面板
+   ══════════════════════════════════════════════════════════════ */
+
+#inspect-panel {
+  display: flex; flex-direction: column; gap: 8px;
+  background: rgba(5, 8, 20, 0.9);
+  border: 1px solid #3a4a6a; border-radius: 10px;
+  padding: 10px 16px 12px;
+}
+
+#inspect-title {
+  font-size: 14px; font-weight: bold; color: #ffd700;
+}
+
+#inspect-content {
+  font-size: 12px; color: #b0c4de; line-height: 1.8;
+}
+
+#inspect-content .inspect-stat   { color: #90caf9; }
+#inspect-content .inspect-skill  { color: #fff59d; margin-top: 4px; }
+#inspect-content .inspect-desc   { color: #b0bec5; padding-left: 10px; }
+#inspect-content .inspect-sep    { color: #3a4a6a; }
+
+/* 查看按鈕 */
+.btn-inspect {
+  background-color: #2d3a5a;
+  color: #90caf9;
+  flex: none; padding: 10px 14px;
+}
+
+.btn-inspect:hover { background-color: #3a4f7a; }

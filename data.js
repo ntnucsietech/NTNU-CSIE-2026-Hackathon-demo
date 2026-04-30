@@ -1,0 +1,171 @@
+// ============================================================
+//  data.js  ── 遊戲資料設定檔
+// ============================================================
+
+var MAP_TILE = {
+  EMPTY:      0,
+  WALL:       1,
+  CHEST:      2,
+  ENEMY:      3,
+  DOOR:       4,
+  MINI_GAME:  5,
+  SHOP:       6,
+  FINAL_BOSS: 9
+};
+
+// ── 地圖設定 ──────────────────────────────────────────────────
+// 地圖分三區：A（主區）→ 門1 → B（中區）→ 門2 → C（鎖定區）
+// 必須為奇數；MAP_SEED 固定使地圖每次相同
+var MAP_WIDTH  = 33;
+var MAP_HEIGHT = 27;
+var MAP_SEED   = 42;   // 改這個數字可以換一張固定地圖
+
+// ── 敵人數量 ─────────────────────────────────────────────────
+var ENEMY_COUNT = 15;  // 三區合計（A:7, B:4, C:4）
+var CHEST_COUNT = 11;
+
+// ── 出生點 ────────────────────────────────────────────────────
+var playerStart = { x: 1, y: 1 };
+
+// ── 視野半徑 ──────────────────────────────────────────────────
+var visionRadius = 3;
+
+// ── 玩家數值 ──────────────────────────────────────────────────
+var playerStats = {
+  name:   "勇者",
+  hp:     100,
+  maxHp:  100,
+  atk:    10,
+  def:    5,
+  money:  25,
+  keys:   0,
+  skills: ["power_strike"]
+};
+
+// ── 敵人（A 區 Tier 1） ───────────────────────────────────────
+var enemies = [
+  { name: "哥布林",   hp: 42,  maxHp: 42,  atk: 11, def: 3,  reward: { money: 13 } },
+  { name: "獸人",     hp: 60,  maxHp: 60,  atk: 13, def: 4,  reward: { money: 18 } },
+  { name: "石像鬼",   hp: 56,  maxHp: 56,  atk: 16, def: 5,  reward: { money: 19 } },
+  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 15, def: 2,  reward: { money: 16 } }
+];
+
+// ── 敵人（B 區 Tier 2）────────────────────────────────────────
+var enemiesTier2 = [
+  { name: "魔法師",   hp: 220, maxHp: 220, atk: 19, def: 10, reward: { money: 52 } },
+  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 75 }, isMiniBarrier: true },
+  { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 58 } },
+  { name: "狼人雙煞", hp: 100, maxHp: 100, atk: 21, def:  5, reward: { money: 62 }, isPaired: true }
+];
+
+// ── 敵人（C 區 Tier 3）────────────────────────────────────────
+var enemiesTier3 = [
+  { name: "死靈法師",  hp: 370, maxHp: 370, atk: 29, def: 15, reward: { money: 80 } },
+  { name: "暗黑巨龍",  hp: 450, maxHp: 450, atk: 28, def: 18, reward: { money: 90 } },
+  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 27, def: 12, reward: { money: 85 }, isPaired: true }
+];
+
+// ── 最終 Boss ─────────────────────────────────────────────────
+// HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
+var finalBoss = {
+  name: "黑暗魔王", hp: 1000, maxHp: 1000, atk: 36, def: 20,
+  reward: { money: 150 }
+};
+
+// ── 寶箱獎勵 ──────────────────────────────────────────────────
+var chestRewards = [
+  { money: 18,  message: "你找到了 18 枚金幣！" },
+  { hp:    15,  message: "你喝下了恢復藥水，回復了 15 點血量！" },
+  { atk:   3,   message: "你找到了力量秘藥，攻擊力永久提升 3！" },
+  { def:   2,   message: "你找到了盾牌碎片，防禦力永久提升 2！" },
+  { money: 28,  message: "大寶箱！你找到了 28 枚金幣！" },
+  { hp:    25,  message: "你找到了生命水晶，回復了 25 點血量！" },
+  { reviveAlly: true, message: "你找到了友軍復活藥水！" }
+];
+
+// ── 技能定義 ──────────────────────────────────────────────────
+var skillDefs = [
+  { id: "power_strike", name: "強力打擊", icon: "💥",
+    desc: "造成 2× 傷害（冷卻 2 回合）", type: "innate",  cooldown: 2 },
+  { id: "heal_magic",   name: "治療術",   icon: "💚",
+    desc: "戰鬥中恢復 25 HP（冷卻 3 回合）", type: "shop", price: 40, cooldown: 3 },
+  { id: "shield_bash",  name: "盾擊",     icon: "🛡️",
+    desc: "防禦並造成 0.5× 傷害（冷卻 2 回合）", type: "shop", price: 35, cooldown: 2 },
+  { id: "berserk",      name: "狂戰士",   icon: "😤",
+    desc: "造成 3× 傷害，自損 15 HP（冷卻 3 回合）",
+    type: "craft", recipe: ["power_strike", "heal_magic"], cooldown: 3 },
+  { id: "chain_slash",  name: "連斬",     icon: "🌀",
+    desc: "同時攻擊所有分身，各造成 ATK 傷害（冷卻 3 回合）",
+    type: "shop", price: 60, cooldown: 3 }
+];
+
+// ── 商店道具 ──────────────────────────────────────────────────
+// isConsumable:false = 立即永久生效
+// isConsumable:true  = 加入背包，戰鬥中手動使用（臨時加成或回血）
+var shopItems = [
+  // 永久升級
+  { name: "攻擊強化藥水", price: 25, effect: { atk: 3        }, desc: "攻擊力永久 +3",      isConsumable: false },
+  { name: "防禦強化藥水", price: 15, effect: { def: 3        }, desc: "防禦力永久 +3",      isConsumable: false },
+  { name: "生命強化藥水", price: 30, effect: { maxHp: 20     }, desc: "最大 HP 永久 +20",   isConsumable: false },
+  { name: "血量恢復藥水", price: 10, effect: { hp:  30       }, desc: "立即回復 30 HP",     isConsumable: false },
+  { name: "大恢復藥水",   price: 25, effect: { hp:  80       }, desc: "立即回復 80 HP",     isConsumable: false },
+  // 戰鬥消耗品（放入背包，戰鬥中使用）
+  { name: "攻擊爆發劑", price: 18, effect: { tempAtk: 12 },
+    desc: "戰鬥中使用：本場 ATK +12",  isConsumable: true },
+  { name: "鋼甲藥水",   price: 14, effect: { tempDef: 8  },
+    desc: "戰鬥中使用：本場 DEF +8",   isConsumable: true },
+  { name: "狂暴藥水",   price: 22, effect: { tempAtk: 25, selfHp: -15 },
+    desc: "戰鬥中使用：ATK +25 但損失 15 HP", isConsumable: true },
+  { name: "治癒藥水",   price: 16, effect: { hp: 50 },
+    desc: "戰鬥中使用：立即回復 50 HP", isConsumable: true },
+  // 同伴復活（永久，立即選擇目標）
+  { name: "友軍復活藥水", price: 50, effect: { reviveAlly: true },
+    desc: "復活一名陣亡的同伴（恢復 50% HP）", isConsumable: false }
+];
+
+// ── 同伴定義（可在商店招募，最多 2 人） ──────────────────────
+var allyDefs = [
+  { id: "archer", name: "弓箭手", icon: "🏹",
+    hp: 70, maxHp: 70, atk: 14, def: 3, price: 80,
+    skill: { id: "volley",     name: "箭雨",    icon: "🌧️",
+             desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
+             isAoe: true,    multiplier: 1,   cooldown: 3 } },
+  { id: "wizard", name: "法師",   icon: "🧙",
+    hp: 55, maxHp: 55, atk: 20, def: 2, price: 100,
+    skill: { id: "blizzard",   name: "冰風暴",  icon: "❄️",
+             desc: "攻擊全體敵人各造成 ATK×1.5 點傷害（冷卻 4 回合）",
+             isAoe: true,    multiplier: 1.5, cooldown: 4 } },
+  { id: "knight", name: "聖騎士", icon: "⚔️",
+    hp: 100, maxHp: 100, atk: 10, def: 12, price: 90,
+    skill: { id: "holy_guard", name: "神聖護盾", icon: "🔰",
+             desc: "全隊本回合受到的傷害減半（冷卻 4 回合）",
+             isShield: true, multiplier: 0,   cooldown: 4 } }
+];
+
+// ── 小遊戲設定 ────────────────────────────────────────────────
+var MG_TARGET          = 5;
+var MG_TIME            = 20;
+var MG_ENEMY_DURATION  = 1500;
+var MG_SPAWN_INTERVAL  = 1000;
+
+// ── 戰鬥模式 ─────────────────────────────────────────────────
+var COMBAT_MODE       = "traditional";
+var PRESS_TURN_TOKENS = 3;
+
+// ── 對話文本 ──────────────────────────────────────────────────
+var dialogues = {
+  intro: [
+    { speaker: "",     text: "黑暗迷宮的大門，緩緩地打開了..." },
+    { speaker: "勇者", text: "這裡就是傳說中的黑暗迷宮嗎？" },
+    { speaker: "勇者", text: "不管如何，我一定要找到出口！" }
+  ],
+  boss_pre: [
+    { speaker: "黑暗魔王", text: "哦？沒想到你居然能來到這裡。" },
+    { speaker: "黑暗魔王", text: "你的勇氣值得讚揚。但也僅止於此了。" },
+    { speaker: "勇者",     text: "魔王！今天就是你的末日！" }
+  ],
+  shop_first: [
+    { speaker: "神秘商人", text: "旅行者，你看起來精疲力竭啊。" },
+    { speaker: "神秘商人", text: "我這裡有不少好東西，要看看嗎？" }
+  ]
+};

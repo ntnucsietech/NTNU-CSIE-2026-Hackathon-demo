@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>迷宮 RPG ── 資工營黑客松</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 1：迷宮主畫面
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-map">
+
+    <!-- 頂部 HUD -->
+    <div id="hud">
+      <div class="hud-item">
+        <span class="hud-label">❤️ HP</span>
+        <span id="hud-hp">100 / 100</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">⚔️ ATK</span>
+        <span id="hud-atk">15</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">🛡️ DEF</span>
+        <span id="hud-def">5</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">💰 金幣</span>
+        <span id="hud-money">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">🔑 鑰匙</span>
+        <span id="hud-keys">0</span>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">🎒 背包</span>
+        <span id="hud-items">0</span>
+      </div>
+      <button class="btn btn-hud" id="btn-open-shop" onclick="openShopFromHUD()" style="display:none">
+        🛒 商店
+      </button>
+    </div>
+
+    <div id="map-message"></div>
+
+    <div id="viewport">
+      <div id="game-board"></div>
+    </div>
+
+    <div id="controls-hint">使用 WASD 或 ↑↓←→ 移動</div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 2：戰鬥畫面
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-combat" style="display:none">
+
+    <div id="combat-field">
+
+      <div class="battle-info-card" id="combat-enemy-card">
+        <div class="battle-card-name" id="enemy-name">敵人名稱</div>
+        <div class="battle-hp-row">
+          <span class="battle-hp-label">HP</span>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar-fill enemy-bar" id="enemy-hp-bar-fill"></div>
+          </div>
+        </div>
+        <div class="battle-hp-num" id="enemy-hp-num">100 / 100</div>
+      </div>
+
+      <div id="combat-enemy-sprite">
+        <img src="assets/enemy.png" id="battle-enemy-img" class="battle-sprite enemy-sprite-img"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="battle-fallback-emoji" style="display:none">👺</span>
+      </div>
+
+      <div id="combat-enemy-sprite-2" style="display:none">
+        <img src="assets/enemy.png" class="battle-sprite enemy-sprite-img"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="battle-fallback-emoji" style="display:none">👺</span>
+      </div>
+
+      <div id="combat-hint"></div>
+
+      <div id="combat-player-sprite">
+        <img src="assets/player.png" class="battle-sprite player-sprite-img"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <span class="battle-fallback-emoji" style="display:none">🧙</span>
+      </div>
+
+      <div class="battle-info-card" id="combat-player-card">
+        <div class="battle-card-name" id="combat-player-name">勇者</div>
+        <div class="battle-hp-row">
+          <span class="battle-hp-label">HP</span>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar-fill player-bar" id="player-hp-bar-fill"></div>
+          </div>
+        </div>
+        <div class="battle-hp-num" id="player-hp-num">100 / 100</div>
+      </div>
+
+    </div>
+
+    <div id="press-turn-display" style="display:none">
+      <div id="pt-player-tokens">玩家 ◆ ◆ ◆</div>
+      <div id="pt-enemy-tokens">敵人 ◆ ◆ ◆</div>
+    </div>
+
+    <div id="combat-panel">
+      <div id="combat-log"></div>
+      <!-- 基本行動 -->
+      <div id="combat-buttons">
+        <button class="btn btn-attack" id="btn-attack" onclick="onAttack()">⚔️ 攻擊</button>
+        <button class="btn btn-defend" id="btn-defend" onclick="onDefend()">🛡️ 防禦</button>
+        <button class="btn btn-flee"   id="btn-flee"   onclick="onFlee()">💨 逃跑</button>
+        <button class="btn btn-inspect" id="btn-inspect" onclick="showEnemyInfo()">📋 查看</button>
+      </div>
+      <!-- 目標選擇面板 -->
+      <div id="target-select-panel" style="display:none">
+        <div id="target-select-title">選擇目標</div>
+        <div id="target-select-buttons"></div>
+        <button class="btn btn-flee" style="flex:none;padding:6px 14px" onclick="cancelTargetSelect()">✕ 取消</button>
+      </div>
+      <!-- 查看敵人面板 -->
+      <div id="inspect-panel" style="display:none">
+        <div id="inspect-title"></div>
+        <div id="inspect-content"></div>
+        <button class="btn btn-defend" style="flex:none;padding:6px 14px" onclick="hideEnemyInfo()">關閉</button>
+      </div>
+      <!-- 技能行動（由 renderSkillButtons 動態填入） -->
+      <div id="combat-skills"></div>
+      <!-- 背包消耗品（由 renderInventoryButtons 動態填入） -->
+      <div id="combat-items" style="display:none"></div>
+      <!-- 同伴行動面板（由 engine.js 控制顯示） -->
+      <div id="ally-action-panel" style="display:none">
+        <div id="ally-action-title">同伴行動</div>
+        <div id="ally-action-buttons"></div>
+      </div>
+      <!-- 同伴 HP 顯示列 -->
+      <div id="ally-hp-area" style="display:none"></div>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 3：商店畫面
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-shop" style="display:none">
+
+    <div id="shop-box">
+      <h2 id="shop-title">🛒 商店</h2>
+      <div id="shop-money-display">
+        你的金幣：<span id="shop-player-money">0</span> 枚
+      </div>
+      <div id="shop-message"></div>
+      <div id="shop-item-list">
+        <!-- 由 engine.js 動態產生 -->
+      </div>
+      <button class="btn btn-close" onclick="closeShop()">離開商店</button>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 4：射擊小遊戲畫面
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-minigame" style="display:none">
+
+    <div id="minigame-box">
+      <h2>🎯 射擊小遊戲</h2>
+      <div id="mg-hud">
+        <span>擊中：<strong id="mg-score">0</strong> / <strong id="mg-target">5</strong></span>
+        <span>⏱️ 剩餘：<strong id="mg-time">30</strong> 秒</span>
+      </div>
+      <div id="mg-area">
+        <div id="mg-crosshair">＋</div>
+      </div>
+      <p id="mg-hint">移動滑鼠瞄準敵人，按下左鍵射擊！</p>
+    </div>
+
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 5：對話框
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-dialogue" style="display:none">
+    <div id="dialogue-box">
+      <div id="dialogue-speaker-name"></div>
+      <p id="dialogue-text-content"></p>
+      <button class="btn btn-dialogue-next" onclick="advanceDialogue()">下一頁 ▶</button>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 6：Game Over
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-gameover" style="display:none">
+    <div id="gameover-box">
+      <h1>💀 Game Over</h1>
+      <p>你在迷宮中倒下了...</p>
+      <button class="btn btn-restart" onclick="restartGame()">🔄 再試一次</button>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       畫面 7：通關
+       ════════════════════════════════════════════════════ -->
+  <div id="screen-clear" style="display:none">
+    <div id="clear-box">
+      <h1>🎉 恭喜通關！</h1>
+      <p>你擊敗了黑暗魔王，拯救了世界！</p>
+      <button class="btn btn-restart" onclick="restartGame()">🔄 再玩一次</button>
+    </div>
+  </div>
+
+
+  <!-- ════════════════════════════════════════════════════
+       載入 JS
+       ════════════════════════════════════════════════════ -->
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="student.js"></script>
+
+  <script>
+    function openShopFromHUD() {
+      if (shopUnlocked) openShop();
+    }
+
+    function closeShop() {
+      showScreen("screen-map");
+      if (shopUnlocked) {
+        document.getElementById("btn-open-shop").style.display = "inline-block";
+      }
+      renderMap();
+    }
+  </script>
+
+</body>
+</html>
