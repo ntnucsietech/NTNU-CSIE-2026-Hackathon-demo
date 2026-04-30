@@ -191,21 +191,29 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
   shuffleSeeded(candB, rng);
   shuffleSeeded(candC, rng);
 
-  // 將上下半部候選格交錯排列，避免因固定種子導致敵人集中在地圖上半部
-  var midY = Math.floor(H / 2);
-  function interleaveHalves(arr) {
-    var top = [], bot = [];
-    for (var i = 0; i < arr.length; i++) (arr[i].y < midY ? top : bot).push(arr[i]);
+  // 將候選格按四象限輪流排列，確保敵人均勻分散到各角落
+  var midY  = Math.floor(H / 2);
+  function spreadByQuadrants(arr, midX) {
+    var q = [[], [], [], []]; // 0:左上, 1:右上, 2:左下, 3:右下
+    for (var i = 0; i < arr.length; i++) {
+      var c = arr[i];
+      q[(c.x >= midX ? 1 : 0) + (c.y >= midY ? 2 : 0)].push(c);
+    }
+    // 以右下 → 左下 → 右上 → 左上順序輪取，讓離出生點最遠的角落優先被選到
+    var order = [3, 2, 1, 0];
     var out = [];
-    for (var i = 0; i < Math.max(top.length, bot.length); i++) {
-      if (i < bot.length) out.push(bot[i]);
-      if (i < top.length) out.push(top[i]);
+    var maxLen = Math.max(q[0].length, q[1].length, q[2].length, q[3].length);
+    for (var i = 0; i < maxLen; i++) {
+      for (var oi = 0; oi < order.length; oi++) {
+        var qi = order[oi];
+        if (i < q[qi].length) out.push(q[qi][i]);
+      }
     }
     return out;
   }
-  candA = interleaveHalves(candA);
-  candB = interleaveHalves(candB);
-  candC = interleaveHalves(candC);
+  candA = spreadByQuadrants(candA, Math.floor(d1 / 2));
+  candB = spreadByQuadrants(candB, Math.floor((d1 + d2) / 2));
+  candC = spreadByQuadrants(candC, Math.floor((d2 + W) / 2));
 
   for (var k = 0; k < cntA && k < candA.length; k++) grid[candA[k].y][candA[k].x] = MAP_TILE.ENEMY;
   for (var k = 0; k < cntB && k < candB.length; k++) grid[candB[k].y][candB[k].x] = MAP_TILE.ENEMY;
