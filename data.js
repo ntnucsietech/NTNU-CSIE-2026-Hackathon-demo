@@ -21,7 +21,7 @@ var MAP_HEIGHT = 27;
 var MAP_SEED   = 42;   // 改這個數字可以換一張固定地圖
 
 // ── 敵人數量 ─────────────────────────────────────────────────
-var ENEMY_COUNT = 21;  // 三區合計（A:7, B:7, C:7）
+var ENEMY_COUNT = 18;   // 三區合計（A:7, B:6, C:5）
 var CHEST_COUNT = 11;
 
 // ── 出生點 ────────────────────────────────────────────────────
@@ -54,22 +54,21 @@ var enemies = [
 var enemiesTier2 = [
   { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 67 } },
   { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true },
-  { name: "黑騎士",   hp: 200, maxHp: 200, atk: 20, def: 14, reward: { money: 75 } },
   { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
   { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
 ];
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 370, maxHp: 370, atk: 29, def: 15, reward: { money: 80 } },
-  { name: "暗黑巨龍",  hp: 450, maxHp: 450, atk: 28, def: 18, reward: { money: 94 } },
-  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 27, def: 12, reward: { money: 85 }, isPaired: true }
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 34, def: 15, reward: { money: 80 } },
+  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 94 } },
+  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 85 }, isPaired: true }
 ];
 
 // ── 最終 Boss ─────────────────────────────────────────────────
 // HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
 var finalBoss = {
-  name: "黑暗魔王", hp: 1200, maxHp: 1000, atk: 40, def: 20,
+  name: "黑暗魔王", hp: 1500, maxHp: 1500, atk: 50, def: 42,
   reward: { money: 150 }
 };
 

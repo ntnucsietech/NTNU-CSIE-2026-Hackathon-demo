@@ -110,15 +110,6 @@ function playerTurn(action, player, enemy) {
     result.message = "🌀 連斬！向所有目標各造成 " + damage + " 點傷害！";
   }
 
-  // ── 黑騎士護甲（主動突擊時弱點暴露才受全傷，否則永遠只受 1）──
-  if (enemy.isMiniBarrier && result.enemyDamage > 0) {
-    if (typeof blackKnightExposed !== "undefined" && blackKnightExposed) {
-      result.message += " ⚡ 弱點暴露！受到全額傷害！";
-    } else {
-      result.enemyDamage = 1;
-      result.message += " 🛡️（格擋中，只造成 1 傷害）";
-    }
-  }
 
   return result;
 }
@@ -165,27 +156,26 @@ function enemyTurn(player, enemy) {
     result.playerDamage = damage;
     result.message = "「" + enemy.name + "」對你發動攻擊，造成了 " + damage + " 點傷害！";
 
-    // ── 狂暴（HP < 40%，必定觸發，+5 傷害，連擊＋範圍濺射）──
+    // ── 狂暴（HP < 40%）：+5 傷害 ＋ 範圍濺射同伴，但不連擊 ──
     if (enemy.hp < enemy.maxHp * 0.4) {
       damage += 5;
       result.playerDamage = damage;
-      result.bonusTurn    = true;
-      result.message = "😈 魔王狂暴！造成了 " + damage + " 點傷害，範圍攻擊！（必定連擊）";
+      result.aoeSplash    = true;
+      result.message = "😈 魔王狂暴！造成了 " + damage + " 點傷害，範圍攻擊波及同伴！";
     }
 
     return result;
   }
 
-  // ── 黑騎士：40% 防禦姿態 / 60% 全力突擊（暴露弱點）──
+  // ── 黑騎士★：40% 防禦姿態（技能）/ 60% 普通攻擊 ──
   if (enemy.isMiniBarrier) {
     if (Math.random() < 0.4) {
       var lightDmg = Math.max(1, Math.floor(enemy.atk * 0.5) - player.def);
       result.playerDamage = lightDmg;
-      result.message = "🛡️ 黑騎士堅守防線！輕擊造成 " + lightDmg + " 點傷害（格擋中，你的攻擊只造成 1）。";
+      result.message = "🛡️ 黑騎士★堅守防線！輕擊造成 " + lightDmg + " 點傷害。";
     } else {
       result.playerDamage = damage;
-      result.knightExposed = true;
-      result.message = "⚔️ 黑騎士全力突擊！造成 " + damage + " 點傷害，防禦破綻暴露！（下一擊可造成全額傷害）";
+      result.message = "⚔️ 黑騎士★發動攻擊！造成 " + damage + " 點傷害！";
     }
     return result;
   }

@@ -184,8 +184,8 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
     return grid[c.y][c.x] === MAP_TILE.EMPTY &&
            Math.abs(c.x - sx) + Math.abs(c.y - sy) > 5;
   });
-  var candB = secB.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY; });
-  var candC = secC.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY; });
+  var candB = secB.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d1 + 2; });
+  var candC = secC.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d2 + 2; });
 
   shuffleSeeded(candA, rng);
   shuffleSeeded(candB, rng);
@@ -490,19 +490,17 @@ function showEnemyInfo() {
   sep();
 
   if (e.isMiniBarrier) {
-    skill("🛡️", "鋼鐵護盾（被動）",
-      "預設格擋中，你的所有攻擊只造成 1 點傷害。");
-    skill("⚔️", "全力突擊（主動，60% 機率）",
-      "主動衝刺攻擊，防禦破綻暴露！暴露後下一次你的攻擊可造成全額傷害。");
-    skill("🛡️", "防禦姿態（主動，40% 機率）",
-      "輕擊（ATK÷2）並繼續格擋，你的攻擊仍只造成 1 傷害。");
+    skill("🛡️", "防禦姿態（技能，40% 機率）",
+      "輕擊（ATK÷2），傷害較低。");
+    skill("⚔️", "普通攻擊（60% 機率）",
+      "標準攻擊，造成 ATK 扣除你的 DEF 的傷害。");
   } else if (e.isFinalBoss) {
     skill("🔱", "召喚分身（被動，25% 每回合）",
       "無分身時，召喚 1~3 個魔王分身（HP 20、ATK " + e.atk + "、每個各自攻擊）。");
     skill("👁️", "黑暗壓制（被動，25% 每回合）",
       "ATK-5 攻擊，使你的攻擊力接下來 2 回合減半（不與壓制中重疊）。");
-    skill("😈", "狂暴連擊（HP < 40% 必定觸發）",
-      "ATK+5 傷害，必定連擊，範圍濺射所有同伴各 10 HP。");
+    skill("😈", "狂暴（HP < 40% 必定觸發）",
+      "ATK+5 傷害，並範圍濺射所有同伴各 10 HP。");
     skill("⚡", "普通攻擊",
       "ATK " + e.atk + " 扣除你的 DEF 造成傷害。");
   } else if (e.isClone) {
@@ -1065,6 +1063,16 @@ function startCombat() {
   showScreen("screen-combat");
 }
 
+function dealDmgToEnemy(target, dmg) {
+  if (target.noOneShot && target.hp > 1) {
+    var newHp = Math.max(1, target.hp - dmg);
+    if (newHp === 1 && target.hp > 1) logMessage("🛡️ 「" + target.name + "」以鋼鐵意志撐住，HP 剩 1！");
+    target.hp = newHp;
+  } else {
+    target.hp = Math.max(0, target.hp - dmg);
+  }
+}
+
 function updateCombatEnemyHp() {
   var isPaired = activeClones.length > 0 && !savedBoss;
 
@@ -1166,7 +1174,7 @@ function executeCombatRound(action) {
   if (result.isAoe && activeClones.length > 0) {
     var killed = 0;
     for (var i = activeClones.length - 1; i >= 0; i--) {
-      activeClones[i].hp = Math.max(0, activeClones[i].hp - result.enemyDamage);
+      dealDmgToEnemy(activeClones[i], result.enemyDamage);
       if (activeClones[i].hp <= 0) { activeClones.splice(i, 1); killed++; }
     }
     logMessage(result.message);
@@ -1188,7 +1196,7 @@ function executeCombatRound(action) {
   }
 
   // ── 單體攻擊 ─────────────────────────────────────────────
-  if (result.enemyDamage > 0) currentEnemy.hp = Math.max(0, currentEnemy.hp - result.enemyDamage);
+  if (result.enemyDamage > 0) dealDmgToEnemy(currentEnemy, result.enemyDamage);
   logMessage(result.message || "");
 
   // 分身被單體擊殺
@@ -1387,8 +1395,7 @@ function executeAllyAction(ally, action) {
       logMessage(ally.icon + " 「" + ally.name + "」沒有目標。"); return;
     }
     var dmg = Math.max(1, ally.atk - (target.def || 0));
-    if (target.isMiniBarrier) { dmg = 1; }
-    target.hp = Math.max(0, target.hp - dmg);
+    dealDmgToEnemy(target, dmg);
     logMessage(ally.icon + " 「" + ally.name + "」攻擊「" + target.name + "」，造成 " + dmg + " 點傷害！" + (target.isMiniBarrier ? " 🛡️（格擋中）" : ""));
     if (target.hp <= 0 && activeClones.length > 0) {
       var ki = activeClones.indexOf(target);
@@ -1421,8 +1428,7 @@ function executeAllyAction(ally, action) {
       for (var ti = targets.length - 1; ti >= 0; ti--) {
         var t = targets[ti];
         var d = Math.max(1, Math.floor(ally.atk * (skill.multiplier || 1)) - (t.def || 0));
-        if (t.isMiniBarrier) { d = 1; }
-        t.hp = Math.max(0, t.hp - d);
+        dealDmgToEnemy(t, d);
         if (t.hp <= 0 && activeClones.length > 0) {
           var ai2 = activeClones.indexOf(t);
           if (ai2 !== -1) { activeClones.splice(ai2, 1); killed++; }
@@ -1721,15 +1727,24 @@ function runNextEnemyTurn() {
   if (dmg > 0) updatePlayerHp(-dmg);
   logMessage(res.message || "");
 
+  // 狂暴濺射：範圍波及所有存活同伴各 10 HP
+  if (res.aoeSplash && currentAllies.length > 0) {
+    for (var bai = 0; bai < currentAllies.length; bai++) {
+      if (!currentAllies[bai].knockedOut) {
+        currentAllies[bai].hp = Math.max(0, currentAllies[bai].hp - 10);
+        if (currentAllies[bai].hp <= 0) {
+          currentAllies[bai].knockedOut = true;
+          logMessage("💔 「" + currentAllies[bai].name + "」被魔王狂暴波及擊倒！");
+        }
+      }
+    }
+    updateAllyHpArea();
+  }
+
   // 壓制技能：玩家攻擊力減半 2 回合
   if (res.suppressPlayer) {
     playerAtkDebuffTurns = 2;
     logMessage("⚠️ 你的攻擊力被壓制！接下來 2 回合僅有一半！");
-  }
-
-  // 黑騎士全力突擊：下一擊弱點暴露
-  if (res.knightExposed) {
-    blackKnightExposed = true;
   }
 
   if (currentPlayer.hp <= 0) {
@@ -1746,26 +1761,8 @@ function runNextEnemyTurn() {
     startNewCombatRound();
   } else {
     decrementSkillCooldowns();
-    // 狂暴連擊（傳統模式也生效）+ 範圍濺射同伴
-    if (res.bonusTurn) {
-      logMessage("💢 狂暴連擊！");
-      if (currentAllies.length > 0) {
-        for (var bai = 0; bai < currentAllies.length; bai++) {
-          if (!currentAllies[bai].knockedOut) {
-            currentAllies[bai].hp = Math.max(0, currentAllies[bai].hp - 10);
-            if (currentAllies[bai].hp <= 0) {
-              currentAllies[bai].knockedOut = true;
-              logMessage("💔 「" + currentAllies[bai].name + "」被魔王狂暴擊倒！");
-            }
-          }
-        }
-        updateAllyHpArea();
-      }
-      setTimeout(function() { runNextEnemyTurn(); }, 800);
-    } else {
-      if (playerAtkDebuffTurns > 0) { playerAtkDebuffTurns--; }
-      setCombatButtonsEnabled(true);
-    }
+    if (playerAtkDebuffTurns > 0) { playerAtkDebuffTurns--; }
+    setCombatButtonsEnabled(true);
   }
 }
 
