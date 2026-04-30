@@ -230,6 +230,7 @@ var savedBoss         = null; // 分身戰鬥期間暫存的 Boss 狀態
 var pairedFightEnemy  = null; // 雙人出場戰鬥的原始資料（用於結算獎勵）
 var currentAllies     = [];   // 當前招募的同伴 [{id,name,icon,hp,maxHp,atk,defense,skill,skillCooldown,knockedOut}]
 var allyShieldActive  = false; // 聖騎士護盾是否生效（本回合）
+var knightTauntActive = false; // 聖騎士護衛是否生效（本回合，代替玩家承傷）
 var blackKnightExposed = false; // 黑騎士全力突擊後弱點暴露（玩家下一擊可全傷）
 var pendingSkillId    = null;  // 等待目標選擇的技能 ID
 var pendingHealTarget = null;  // 治療術的目標（null=玩家, ally obj=同伴）
@@ -393,7 +394,7 @@ function showTargetSelect(skillId, targets) {
   if (!panel || !btns) { executeCombatRound("skill_" + skillId); return; }
 
   var title = document.getElementById("target-select-title");
-  if (title) title.textContent = skillId === "heal_magic" ? "💚 選擇治療目標" : "🎯 選擇攻擊目標";
+  if (title) title.textContent = skillId === "heal_magic" ? "💚 選擇治療目標" : "⚔️ 選擇攻擊目標";
 
   btns.innerHTML = "";
   targets.forEach(function(t) {
@@ -430,7 +431,11 @@ function onTargetSelect(targetId) {
     }
   }
 
-  executeCombatRound("skill_" + skillId);
+  if (skillId === "attack") {
+    executeCombatRound("attack");
+  } else {
+    executeCombatRound("skill_" + skillId);
+  }
 }
 
 function cancelTargetSelect() {
@@ -984,6 +989,7 @@ function startCombat() {
   playerSkillCooldowns = {};
   playerAtkDebuffTurns = 0;
   allyShieldActive     = false;
+  knightTauntActive    = false;
   currentPlayer.tempAtk = 0;
   currentPlayer.tempDef = 0;
 
@@ -1074,7 +1080,17 @@ function updateCombatHint() {
 }
 
 // ── 戰鬥流程 ─────────────────────────────────────────────────
-function onAttack() { executeCombatRound("attack");  }
+function onAttack() {
+  if (activeClones.length > 1) {
+    var etargets = [];
+    activeClones.forEach(function(c, i) {
+      etargets.push({ id: "clone_" + i, label: "👺 " + c.name + " HP:" + c.hp + "/" + c.maxHp });
+    });
+    showTargetSelect("attack", etargets);
+    return;
+  }
+  executeCombatRound("attack");
+}
 function onDefend() { executeCombatRound("defend");  }
 function onFlee()   { executeCombatRound("flee");    }
 
@@ -1384,6 +1400,10 @@ function executeAllyAction(ally, action) {
       allyShieldActive = true;
       logMessage(ally.icon + " 「" + ally.name + "」使用「" + skill.name + "」！本回合傷害減半！");
     }
+    if (skill.isTaunt) {
+      knightTauntActive = true;
+      logMessage(ally.icon + " 「" + ally.name + "」使用「" + skill.name + "」！本回合替玩家承受攻擊！");
+    }
   }
 }
 
@@ -1609,6 +1629,29 @@ function runNextEnemyTurn() {
     dmg = Math.floor(dmg / 2);
     logMessage(currentEnemy.name + " 攻擊，但防禦/護盾減少了傷害！");
   }
+
+  var taunt = knightTauntActive;
+  knightTauntActive = false;
+  if (taunt && dmg > 0) {
+    var knightAlly = null;
+    for (var ki = 0; ki < currentAllies.length; ki++) {
+      if (currentAllies[ki].id === "knight" && !currentAllies[ki].knockedOut) {
+        knightAlly = currentAllies[ki]; break;
+      }
+    }
+    if (knightAlly) {
+      var ktDmg = Math.max(1, dmg - (knightAlly.def || 0));
+      knightAlly.hp = Math.max(0, knightAlly.hp - ktDmg);
+      logMessage("🔰 「" + knightAlly.name + "」挺身護衛，承受了 " + ktDmg + " 點傷害！");
+      if (knightAlly.hp <= 0) {
+        knightAlly.knockedOut = true;
+        logMessage("💔 「" + knightAlly.name + "」力竭倒下！");
+      }
+      updateAllyHpArea();
+      dmg = 0;
+    }
+  }
+
   if (dmg > 0) updatePlayerHp(-dmg);
   logMessage(res.message || "");
 
@@ -1752,6 +1795,7 @@ function restartGame() {
   pairedFightEnemy      = null;
   currentAllies         = [];
   allyShieldActive      = false;
+  knightTauntActive     = false;
   blackKnightExposed    = false;
   pendingSkillId        = null;
   pendingHealTarget     = null;

@@ -126,7 +126,7 @@ var shopItems = [
 // ── 同伴定義（可在商店招募，最多 2 人） ──────────────────────
 var allyDefs = [
   { id: "archer", name: "弓箭手", icon: "🏹",
-    hp: 70, maxHp: 70, atk: 14, def: 3, price: 80,
+    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80,
     skill: { id: "volley",     name: "箭雨",    icon: "🌧️",
              desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
              isAoe: true,    multiplier: 1,   cooldown: 3 } },
@@ -136,10 +136,10 @@ var allyDefs = [
              desc: "攻擊全體敵人各造成 ATK×1.5 點傷害（冷卻 4 回合）",
              isAoe: true,    multiplier: 1.5, cooldown: 4 } },
   { id: "knight", name: "聖騎士", icon: "⚔️",
-    hp: 100, maxHp: 100, atk: 10, def: 12, price: 90,
-    skill: { id: "holy_guard", name: "神聖護盾", icon: "🔰",
-             desc: "全隊本回合受到的傷害減半（冷卻 4 回合）",
-             isShield: true, multiplier: 0,   cooldown: 4 } }
+    hp: 130, maxHp: 130, atk: 14, def: 15, price: 100,
+    skill: { id: "holy_guard", name: "護衛",     icon: "🔰",
+             desc: "本回合替玩家承受敵人攻擊（以自身 DEF 減傷，冷卻 3 回合）",
+             isTaunt: true,  multiplier: 0,   cooldown: 3 } }
 ];
 
 // ── 小遊戲設定 ────────────────────────────────────────────────
