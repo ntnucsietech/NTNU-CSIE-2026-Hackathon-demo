@@ -48,7 +48,7 @@ function playerTurn(action, player, enemy) {
 
   // ── 逃跑 ──
   if (action === "flee") {
-    if (Math.random() < 0.5) {
+    if (Math.random() < 0.7) {
       result.playerFlee = true;
       result.message = "你成功逃跑了！";
     } else {
