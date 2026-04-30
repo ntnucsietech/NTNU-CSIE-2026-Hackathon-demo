@@ -53,16 +53,16 @@ var enemies = [
 // ── 敵人（B 區 Tier 2）────────────────────────────────────────
 var enemiesTier2 = [
   { name: "魔法師",   hp: 250, maxHp: 250, atk: 19, def: 10, reward: { money: 67 } },
-  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 24, def:  0, reward: { money: 90 }, isMiniBarrier: true, noOneShot: true },
+  { name: "黑騎士★",  hp: 10,  maxHp: 10,  atk: 28, def:  0, reward: { money: 90 }, isMiniBarrier: true, noOneShot: true },
   { name: "地獄犬",   hp: 190, maxHp: 190, atk: 25, def:  8, reward: { money: 73 } },
   { name: "狼人雙煞", hp: 120, maxHp: 120, atk: 21, def:  5, reward: { money: 77 }, isPaired: true }
 ];
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 80 } },
-  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 94 } },
-  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 85 }, isPaired: true }
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 46, def: 15, reward: { money: 80 } },
+  { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 38, def: 18, reward: { money: 94 } },
+  { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 42, def: 12, reward: { money: 85 }, isPaired: true }
 ];
 
 // ── 最終 Boss ─────────────────────────────────────────────────
