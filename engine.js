@@ -1677,6 +1677,17 @@ function giveEnemyReward() {
   var hpGain = Math.min(28, 10 + Math.floor(currentEnemy.maxHp / 10));
   if (hpGain > 0) { updatePlayerHp(hpGain); logMessage("💚 戰鬥後恢復了 " + hpGain + " 點 HP！"); }
 
+  var allyHeal = Math.max(5, Math.floor(hpGain / 3));
+  for (var ai = 0; ai < currentAllies.length; ai++) {
+    var a = currentAllies[ai];
+    if (!a.knockedOut && a.hp < a.maxHp) {
+      a.hp = Math.min(a.maxHp, a.hp + allyHeal);
+    }
+  }
+  if (currentAllies.some(function(a) { return !a.knockedOut; })) {
+    logMessage("💚 同伴也恢復了 " + allyHeal + " 點 HP！");
+  }
+
   setTimeout(function() {
     if (currentEnemy.isFinalBoss) {
       triggerGameClear();
