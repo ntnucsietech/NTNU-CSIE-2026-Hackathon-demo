@@ -175,49 +175,69 @@ function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
   }
 
   // 散布敵人（分區、分難度）
-  var ec = (typeof ENEMY_COUNT !== "undefined") ? ENEMY_COUNT : 21;
-  var cntA = Math.floor(ec / 3);        // =7 for ec=21
-  var cntB = Math.floor(ec / 3);        // =7 for ec=21
-  var cntC = ec - cntA - cntB;          // =7 for ec=21
+  var ec   = (typeof ENEMY_COUNT !== "undefined") ? ENEMY_COUNT : 6;
+  var cntA = Math.floor(ec / 3);
+  var cntB = Math.floor(ec / 3);
+  var cntC = ec - cntA - cntB;
 
-  var candA = secA.filter(function(c) {
+  // 網格分佈放怪：把區域切成 count 個格子，每格隨機取一個空格放怪
+  // 同時強制最小間距，防止兩隻怪靠太近
+  var MIN_DIST = 5;
+  function placeZoneEnemies(pool, count, xMin, xMax) {
+    if (count <= 0 || pool.length === 0) return;
+    var cols   = Math.ceil(Math.sqrt(count));
+    var rows   = Math.ceil(count / cols);
+    var cellW  = Math.max(1, Math.floor((xMax - xMin) / cols));
+    var cellH  = Math.max(1, Math.floor((H - 2) / rows));
+    var placed = [];
+
+    // 隨機打亂格子順序，避免固定從左上開始取
+    var cells = [];
+    for (var r = 0; r < rows; r++)
+      for (var c = 0; c < cols; c++)
+        cells.push([r, c]);
+    shuffleSeeded(cells, rng);
+
+    for (var i = 0; i < cells.length && placed.length < count; i++) {
+      var r = cells[i][0], c = cells[i][1];
+      var cx1 = xMin + c * cellW,          cx2 = Math.min(xMax, cx1 + cellW);
+      var cy1 = 1    + r * cellH,          cy2 = Math.min(H - 2, cy1 + cellH);
+
+      // 收集此格子內的有效候選格（仍為 EMPTY，且滿足最小間距）
+      var cands = [], fallback = [];
+      for (var j = 0; j < pool.length; j++) {
+        var p = pool[j];
+        if (p.x < cx1 || p.x >= cx2 || p.y < cy1 || p.y >= cy2) continue;
+        if (grid[p.y][p.x] !== MAP_TILE.EMPTY) continue;
+        var near = false;
+        for (var k = 0; k < placed.length; k++) {
+          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) {
+            near = true; break;
+          }
+        }
+        if (!near) cands.push(p);
+        else        fallback.push(p);
+      }
+
+      // 距離限制找不到時退而求其次用 fallback
+      var pick_pool = cands.length > 0 ? cands : fallback;
+      if (pick_pool.length === 0) continue;
+      var pick = pick_pool[Math.floor(rng() * pick_pool.length)];
+      grid[pick.y][pick.x] = MAP_TILE.ENEMY;
+      placed.push(pick);
+    }
+  }
+
+  var poolA = secA.filter(function(c) {
     return grid[c.y][c.x] === MAP_TILE.EMPTY &&
            Math.abs(c.x - sx) + Math.abs(c.y - sy) > 5;
   });
-  var candB = secB.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d1 + 2; });
-  var candC = secC.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d2 + 2; });
+  var poolB = secB.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d1 + 2; });
+  var poolC = secC.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d2 + 2; });
 
-  shuffleSeeded(candA, rng);
-  shuffleSeeded(candB, rng);
-  shuffleSeeded(candC, rng);
-
-  // 將候選格按四象限輪流排列，確保敵人均勻分散到各角落
-  var midY  = Math.floor(H / 2);
-  function spreadByQuadrants(arr, midX) {
-    var q = [[], [], [], []]; // 0:左上, 1:右上, 2:左下, 3:右下
-    for (var i = 0; i < arr.length; i++) {
-      var c = arr[i];
-      q[(c.x >= midX ? 1 : 0) + (c.y >= midY ? 2 : 0)].push(c);
-    }
-    // 以右下 → 左下 → 右上 → 左上順序輪取，讓離出生點最遠的角落優先被選到
-    var order = [3, 2, 1, 0];
-    var out = [];
-    var maxLen = Math.max(q[0].length, q[1].length, q[2].length, q[3].length);
-    for (var i = 0; i < maxLen; i++) {
-      for (var oi = 0; oi < order.length; oi++) {
-        var qi = order[oi];
-        if (i < q[qi].length) out.push(q[qi][i]);
-      }
-    }
-    return out;
-  }
-  candA = spreadByQuadrants(candA, Math.floor(d1 / 2));
-  candB = spreadByQuadrants(candB, Math.floor((d1 + d2) / 2));
-  candC = spreadByQuadrants(candC, Math.floor((d2 + W) / 2));
-
-  for (var k = 0; k < cntA && k < candA.length; k++) grid[candA[k].y][candA[k].x] = MAP_TILE.ENEMY;
-  for (var k = 0; k < cntB && k < candB.length; k++) grid[candB[k].y][candB[k].x] = MAP_TILE.ENEMY;
-  for (var k = 0; k < cntC && k < candC.length; k++) grid[candC[k].y][candC[k].x] = MAP_TILE.ENEMY;
+  placeZoneEnemies(poolA, cntA, 1,      d1);
+  placeZoneEnemies(poolB, cntB, d1 + 1, d2);
+  placeZoneEnemies(poolC, cntC, d2 + 1, W - 1);
 }
 
 // 執行時用的洗牌（Math.random，非固定）
@@ -1206,6 +1226,7 @@ function executeCombatRound(action) {
   // ── 單體攻擊 ─────────────────────────────────────────────
   if (result.enemyDamage > 0) dealDmgToEnemy(currentEnemy, result.enemyDamage);
   logMessage(result.message || "");
+  updateCombatEnemyHp();  // 先讓血條反映最新 HP（包含歸 0），再做 splice / 結算
 
   // 分身被單體擊殺
   if (activeClones.length > 0 && currentEnemy.hp <= 0) {
@@ -1251,6 +1272,7 @@ function executeCombatRound(action) {
 function runEnemyPhase() {
   // 同伴行動期間可能已擊倒敵人，先檢查
   if (currentEnemy && currentEnemy.hp <= 0) {
+    updateCombatEnemyHp();  // 確保血條歸 0 後再結算
     if (activeClones.length === 0 && !savedBoss && !pairedFightEnemy) {
       logMessage("✨ 同伴將「" + currentEnemy.name + "」擊倒了！");
       playSound("victory"); giveEnemyReward(); return;

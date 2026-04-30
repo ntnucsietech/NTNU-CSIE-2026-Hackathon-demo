@@ -60,7 +60,7 @@ var enemiesTier2 = [
 
 // ── 敵人（C 區 Tier 3）────────────────────────────────────────
 var enemiesTier3 = [
-  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 34, def: 15, reward: { money: 80 } },
+  { name: "死靈法師",  hp: 420, maxHp: 420, atk: 38, def: 15, reward: { money: 80 } },
   { name: "暗黑巨龍",  hp: 510, maxHp: 510, atk: 30, def: 18, reward: { money: 94 } },
   { name: "冥界雙衛", hp: 200, maxHp: 200, atk: 35, def: 12, reward: { money: 85 }, isPaired: true }
 ];
