@@ -2,7 +2,7 @@
 //  engine.js  ── 遊戲核心引擎
 // ============================================================
 
-// ── 偽隨機數（固定種子，保證地圖每次相同） ────────────────────
+// ── 偽隨機數（固定種子） ────────────────────────────────────────
 function makeRng(seed) {
   var s = (seed >>> 0) || 1;
   return function() {
@@ -10,264 +10,6 @@ function makeRng(seed) {
     return s / 4294967296;
   };
 }
-
-// 用固定種子洗牌（地圖生成用）
-function shuffleSeeded(arr, rng) {
-  for (var i = arr.length - 1; i > 0; i--) {
-    var j = Math.floor(rng() * (i + 1));
-    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-  }
-}
-
-// 記錄兩道隔牆的 x 座標，供 triggerEnemy 判斷敵人強度
-var mazeDivX1 = -1;
-var mazeDivX2 = -1;
-
-// ── 迷宮生成：三區分隔，固定種子 ────────────────────────────
-// A區（左）→ 門1 → B區（中）→ 門2 → C區（右，鎖定）
-function generateMaze() {
-  var W = (typeof MAP_WIDTH  !== "undefined") ? MAP_WIDTH  : 33;
-  var H = (typeof MAP_HEIGHT !== "undefined") ? MAP_HEIGHT : 27;
-  if (W % 2 === 0) W++;
-  if (H % 2 === 0) H++;
-
-  var seed = (typeof MAP_SEED !== "undefined") ? MAP_SEED : 42;
-  var rng  = makeRng(seed);
-
-  var grid = [];
-  for (var y = 0; y < H; y++) {
-    var row = [];
-    for (var x = 0; x < W; x++) row.push(MAP_TILE.WALL);
-    grid.push(row);
-  }
-
-  // 三等分隔牆（偶數 x 座標）
-  var d1 = Math.floor(W / 3);
-  if (d1 % 2 !== 0) d1++;
-  var d2 = Math.floor(W * 2 / 3);
-  if (d2 % 2 !== 0) d2++;
-  mazeDivX1 = d1;
-  mazeDivX2 = d2;
-
-  // A 區 (x: 1 到 d1-1)
-  generateMazeSection(grid, 1,    1, d1 - 1, H - 2, 1,    1, rng);
-  // B 區 (x: d1+1 到 d2-1)
-  var bx0 = d1 + 1; if (bx0 % 2 === 0) bx0++;
-  generateMazeSection(grid, d1+1, 1, d2 - 1, H - 2, bx0,  1, rng);
-  // C 區 (x: d2+1 到 W-2)
-  var cx0 = d2 + 1; if (cx0 % 2 === 0) cx0++;
-  generateMazeSection(grid, d2+1, 1, W  - 2, H - 2, cx0,  1, rng);
-
-  // 各區內部增加迴路（更連通）
-  addExtraConnections(grid, W, H, d1, d2, 0.4, rng);
-
-  // 兩道門位置錯開（上 1/3 和下 2/3）
-  var row1 = Math.floor(H / 3);     if (row1 % 2 === 0) row1++;
-  var row2 = Math.floor(H * 2 / 3); if (row2 % 2 === 0) row2++;
-  grid[row1][d1] = MAP_TILE.DOOR;
-  grid[row2][d2] = MAP_TILE.DOOR;
-
-  placeTilesOnMaze(grid, W, H, d1, d2, rng);
-  return grid;
-}
-
-function generateMazeSection(grid, x1, y1, x2, y2, startX, startY, rng) {
-  var visited = {};
-  var stack   = [];
-  grid[startY][startX] = MAP_TILE.EMPTY;
-  visited[startX + "," + startY] = true;
-  stack.push({ x: startX, y: startY });
-
-  var dirs = [{ dx: 2, dy: 0 }, { dx: -2, dy: 0 },
-              { dx: 0, dy: 2 }, { dx:  0, dy: -2 }];
-
-  while (stack.length > 0) {
-    var cur = stack[stack.length - 1];
-    var nb  = [];
-    for (var i = 0; i < dirs.length; i++) {
-      var nx = cur.x + dirs[i].dx;
-      var ny = cur.y + dirs[i].dy;
-      if (nx >= x1 && nx <= x2 && ny >= y1 && ny <= y2 &&
-          !visited[nx + "," + ny]) {
-        nb.push({ x: nx, y: ny,
-                  wx: cur.x + dirs[i].dx / 2,
-                  wy: cur.y + dirs[i].dy / 2 });
-      }
-    }
-    if (nb.length > 0) {
-      var next = nb[Math.floor(rng() * nb.length)];
-      grid[next.wy][next.wx] = MAP_TILE.EMPTY;
-      grid[next.y][next.x]   = MAP_TILE.EMPTY;
-      visited[next.x + "," + next.y] = true;
-      stack.push({ x: next.x, y: next.y });
-    } else {
-      stack.pop();
-    }
-  }
-}
-
-// 隨機打通各區內部的牆，增加迴路，不跨越隔牆
-function addExtraConnections(grid, W, H, d1, d2, prob, rng) {
-  for (var y = 1; y < H - 1; y++) {
-    for (var x = 1; x < W - 1; x++) {
-      if (x === d1 || x === d2) continue;
-      if (grid[y][x] !== MAP_TILE.WALL) continue;
-      if (rng() > prob) continue;
-      var hOk = grid[y][x-1] === MAP_TILE.EMPTY && grid[y][x+1] === MAP_TILE.EMPTY;
-      var vOk = grid[y-1][x] === MAP_TILE.EMPTY && grid[y+1][x] === MAP_TILE.EMPTY;
-      if (hOk || vOk) grid[y][x] = MAP_TILE.EMPTY;
-    }
-  }
-}
-
-function placeTilesOnMaze(grid, W, H, d1, d2, rng) {
-  var sx = playerStart.x, sy = playerStart.y;
-
-  function openCount(c) {
-    var n = 0;
-    if (grid[c.y-1] && grid[c.y-1][c.x] === MAP_TILE.EMPTY) n++;
-    if (grid[c.y+1] && grid[c.y+1][c.x] === MAP_TILE.EMPTY) n++;
-    if (grid[c.y][c.x-1] === MAP_TILE.EMPTY) n++;
-    if (grid[c.y][c.x+1] === MAP_TILE.EMPTY) n++;
-    return n;
-  }
-
-  var secA = [], secB = [], secC = [];
-  for (var y = 1; y < H - 1; y++) {
-    for (var x = 1; x < W - 1; x++) {
-      if (grid[y][x] !== MAP_TILE.EMPTY) continue;
-      if      (x < d1 && !(x === sx && y === sy)) secA.push({ x: x, y: y });
-      else if (x > d1 && x < d2)                  secB.push({ x: x, y: y });
-      else if (x > d2)                             secC.push({ x: x, y: y });
-    }
-  }
-
-  var deadA = secA.filter(function(c) { return openCount(c) === 1; });
-  var deadB = secB.filter(function(c) { return openCount(c) === 1; });
-  var deadC = secC.filter(function(c) { return openCount(c) === 1; });
-
-  // FINAL_BOSS 在 C 區最深的死路
-  deadC.sort(function(a, b) { return (b.x - d2) - (a.x - d2); });
-  if (deadC.length > 0) { var boss = deadC.shift(); grid[boss.y][boss.x] = MAP_TILE.FINAL_BOSS; }
-
-  shuffleSeeded(deadA, rng);
-  shuffleSeeded(deadB, rng);
-  shuffleSeeded(deadC, rng);
-
-  // A 區：小遊戲、商店、寶箱 ×3
-  var specA = [MAP_TILE.MINI_GAME, MAP_TILE.SHOP,
-               MAP_TILE.CHEST, MAP_TILE.CHEST, MAP_TILE.CHEST];
-  for (var k = 0; k < specA.length && deadA.length > 0; k++) {
-    var c = deadA.shift(); grid[c.y][c.x] = specA[k];
-  }
-
-  // B 區：小遊戲、寶箱 ×3
-  var specB = [MAP_TILE.MINI_GAME,
-               MAP_TILE.CHEST, MAP_TILE.CHEST, MAP_TILE.CHEST];
-  for (var k = 0; k < specB.length && deadB.length > 0; k++) {
-    var c = deadB.shift(); grid[c.y][c.x] = specB[k];
-  }
-
-  // C 區：寶箱 ×3
-  var specC = [MAP_TILE.CHEST, MAP_TILE.CHEST, MAP_TILE.CHEST];
-  for (var k = 0; k < specC.length && deadC.length > 0; k++) {
-    var c = deadC.shift(); grid[c.y][c.x] = specC[k];
-  }
-
-  // 散布敵人（分區、分難度）
-  var ec   = (typeof ENEMY_COUNT !== "undefined") ? ENEMY_COUNT : 6;
-  var cntA = Math.floor(ec / 3);
-  var cntB = Math.floor(ec / 3);
-  var cntC = ec - cntA - cntB;
-
-  // 網格分佈放怪：根據區域長寬比切成格子，每格隨機取一個空格放怪
-  // 使用浮點邊界讓每格面積完全相等；同時強制最小間距
-  var MIN_DIST = 5;
-  function placeZoneEnemies(pool, count, xMin, xMax) {
-    if (count <= 0 || pool.length === 0) return;
-    var zW = xMax - xMin;
-    var zH = H - 2;
-    // 長寬比感知：確保至少 2 欄，讓水平也有分散
-    var cols = Math.max(2, Math.round(Math.sqrt(count * zW / zH)));
-    var rows = Math.ceil(count / cols);
-    while (cols * rows < count) rows++;
-
-    // 打亂格子順序，避免永遠從同一角落開始
-    var cells = [];
-    for (var r = 0; r < rows; r++)
-      for (var c = 0; c < cols; c++)
-        cells.push([r, c]);
-    shuffleSeeded(cells, rng);
-
-    var placed = [];
-    for (var i = 0; i < cells.length && placed.length < count; i++) {
-      var ci = cells[i][1], ri = cells[i][0];
-      // 浮點邊界，每格面積相等
-      var cx1 = xMin + ci       * zW / cols;
-      var cx2 = xMin + (ci + 1) * zW / cols;
-      var cy1 = 1    + ri       * zH / rows;
-      var cy2 = 1    + (ri + 1) * zH / rows;
-
-      var cands = [], fb = [];
-      for (var j = 0; j < pool.length; j++) {
-        var p = pool[j];
-        if (p.x < cx1 || p.x >= cx2 || p.y < cy1 || p.y >= cy2) continue;
-        if (grid[p.y][p.x] !== MAP_TILE.EMPTY) continue;
-        var near = false;
-        for (var k = 0; k < placed.length; k++)
-          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) { near = true; break; }
-        (near ? fb : cands).push(p);
-      }
-      var pp = cands.length > 0 ? cands : fb;
-      if (pp.length === 0) continue;
-      var pick = pp[Math.floor(rng() * pp.length)];
-      grid[pick.y][pick.x] = MAP_TILE.ENEMY;
-      placed.push(pick);
-    }
-
-    // 若網格不夠用（全是牆）則從整個 pool 補足剩餘數量
-    if (placed.length < count) {
-      var rest = [];
-      for (var j = 0; j < pool.length; j++) {
-        var p = pool[j];
-        if (grid[p.y][p.x] !== MAP_TILE.EMPTY) continue;
-        var near = false;
-        for (var k = 0; k < placed.length; k++)
-          if (Math.abs(p.x - placed[k].x) + Math.abs(p.y - placed[k].y) < MIN_DIST) { near = true; break; }
-        if (!near) rest.push(p);
-      }
-      shuffleSeeded(rest, rng);
-      for (var j = 0; j < rest.length && placed.length < count; j++) {
-        grid[rest[j].y][rest[j].x] = MAP_TILE.ENEMY;
-        placed.push(rest[j]);
-      }
-    }
-  }
-
-  var poolA = secA.filter(function(c) {
-    return grid[c.y][c.x] === MAP_TILE.EMPTY &&
-           Math.abs(c.x - sx) + Math.abs(c.y - sy) > 5;
-  });
-  var poolB = secB.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d1 + 2; });
-  var poolC = secC.filter(function(c) { return grid[c.y][c.x] === MAP_TILE.EMPTY && c.x > d2 + 2; });
-
-  placeZoneEnemies(poolA, cntA, 1,      d1);
-  placeZoneEnemies(poolB, cntB, d1 + 1, d2);
-  placeZoneEnemies(poolC, cntC, d2 + 1, W - 1);
-}
-
-// 執行時用的洗牌（Math.random，非固定）
-function shuffle(arr) {
-  for (var i = arr.length - 1; i > 0; i--) {
-    var j = Math.floor(Math.random() * (i + 1));
-    var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-  }
-}
-
-// ── map.js 向下相容防衛宣告 ───────────────────────────────────
-if (typeof portals      === "undefined") { var portals      = {}; }
-if (typeof tileEnemyMap === "undefined") { var tileEnemyMap = {}; }
-if (typeof zoneEnemies  === "undefined") { var zoneEnemies  = { A: [], B: [], C: [] }; }
 
 
 // ── 全域遊戲狀態 ──────────────────────────────────────────────
@@ -287,23 +29,20 @@ var currentPlayer = {
   tempDef:   0     // 本場戰鬥臨時防禦加成
 };
 
-var currentMap = (typeof mapGrid !== "undefined" && Array.isArray(mapGrid) && mapGrid.length > 0)
-  ? mapGrid
-  : generateMaze();
+var currentMap = mapGrid.map(function(row) { return row.slice(); });
 
-// 自訂 mapGrid：從 DOOR 磚自動偵測 A/B/C 分區邊界（currentMap 已就位後才掃）
-if (typeof mapGrid !== "undefined" && Array.isArray(mapGrid) && mapGrid.length > 0) {
-  var _doorXs = [];
-  for (var _dy = 0; _dy < currentMap.length; _dy++) {
-    for (var _dx = 0; _dx < currentMap[_dy].length; _dx++) {
-      if (currentMap[_dy][_dx] === MAP_TILE.DOOR && _doorXs.indexOf(_dx) === -1)
-        _doorXs.push(_dx);
-    }
+// 從 DOOR 磚偵測 A/B/C 分區邊界（供 triggerEnemy 判斷敵人強度）
+var mazeDivX1 = -1, mazeDivX2 = -1;
+var _doorXs = [];
+for (var _dy = 0; _dy < currentMap.length; _dy++) {
+  for (var _dx = 0; _dx < currentMap[_dy].length; _dx++) {
+    if (currentMap[_dy][_dx] === MAP_TILE.DOOR && _doorXs.indexOf(_dx) === -1)
+      _doorXs.push(_dx);
   }
-  _doorXs.sort(function(a, b) { return a - b; });
-  if (_doorXs.length >= 1) mazeDivX1 = _doorXs[0];
-  if (_doorXs.length >= 2) mazeDivX2 = _doorXs[_doorXs.length - 1];
 }
+_doorXs.sort(function(a, b) { return a - b; });
+if (_doorXs.length >= 1) mazeDivX1 = _doorXs[0];
+if (_doorXs.length >= 2) mazeDivX2 = _doorXs[_doorXs.length - 1];
 
 var visitedTiles      = [];
 var currentEnemy      = null;
@@ -1024,7 +763,7 @@ function _pickEnemy(x, y) {
     tier = enemies; zoneLetter = "A";
   }
   // zoneEnemies 過濾：若該區指定了允許的怪物名稱，則只從這些怪物中選取
-  if (typeof zoneEnemies !== "undefined" && zoneEnemies[zoneLetter] && zoneEnemies[zoneLetter].length > 0) {
+  if (zoneEnemies[zoneLetter] && zoneEnemies[zoneLetter].length > 0) {
     var _allowed = zoneEnemies[zoneLetter];
     var _filtered = [];
     for (var _fi = 0; _fi < tier.length; _fi++) {
@@ -2297,7 +2036,7 @@ function restartGame() {
   currentPlayer.tempAtk   = 0;
   currentPlayer.tempDef   = 0;
 
-  currentMap            = generateMaze();
+  currentMap            = mapGrid.map(function(row) { return row.slice(); });
   visitedTiles          = [];
   currentEnemy          = null;
   activeClones          = [];
