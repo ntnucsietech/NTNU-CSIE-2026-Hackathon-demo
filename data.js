@@ -2,7 +2,18 @@
 //  data.js  ── 遊戲資料設定檔
 // ============================================================
 
-// ── 地圖設定（隨機生成模式參數；若 map.js 有 mapGrid 則不使用） ──
+var MAP_TILE = {
+  EMPTY:      0,
+  WALL:       1,
+  CHEST:      2,
+  ENEMY:      3,
+  DOOR:       4,
+  MINI_GAME:  5,
+  SHOP:       6,
+  FINAL_BOSS: 9
+};
+
+// ── 地圖設定 ──────────────────────────────────────────────────
 // 地圖分三區：A（主區）→ 門1 → B（中區）→ 門2 → C（鎖定區）
 // 必須為奇數；MAP_SEED 固定使地圖每次相同
 var MAP_WIDTH  = 33;
@@ -13,14 +24,20 @@ var MAP_SEED   = 42;   // 改這個數字可以換一張固定地圖
 var ENEMY_COUNT = 18;    // 三區合計（A:2, B:2, C:3）
 var CHEST_COUNT = 11;
 
+// ── 出生點 ────────────────────────────────────────────────────
+var playerStart = { x: 1, y: 1 };
+
+// ── 視野半徑 ──────────────────────────────────────────────────
+var visionRadius = 3;
+
 // ── 玩家數值 ──────────────────────────────────────────────────
 var playerStats = {
   name:   "勇者",
-  hp:     1000,
-  maxHp:  1000      ,
+  hp:     100,
+  maxHp:  100,
   atk:    10,
   def:    5,
-  money:  10000,
+  money:  25,
   keys:   0,
   skills: ["power_strike"]
 };
@@ -110,7 +127,7 @@ var shopItems = [
 // ── 同伴定義（可在商店招募，最多 2 人） ──────────────────────
 var allyDefs = [
   { id: "archer", name: "弓箭手", icon: "🏹",
-    hp: 80, maxHp: 80, atk: 18, def: 3, price: 1, critChance: 0.5,
+    hp: 80, maxHp: 80, atk: 18, def: 3, price: 80, critChance: 0.5,
     skill: { id: "volley",     name: "箭雨",    icon: "🌧️",
              desc: "攻擊全體敵人各造成 ATK 點傷害（冷卻 3 回合）",
              isAoe: true,    multiplier: 1,   cooldown: 2 } },
