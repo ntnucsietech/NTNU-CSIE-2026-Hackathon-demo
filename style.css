@@ -183,7 +183,7 @@ body {
 }
 
 #combat-field {
-  width: 100%; max-width: 860px; height: 290px;
+  width: 100%; max-width: 860px; height: 380px;
   position: relative; flex-shrink: 0;
   background: linear-gradient(180deg,
     #1a2a4a 0%, #243555 40%,
@@ -211,8 +211,9 @@ body {
   box-shadow: 4px 4px 0 #666;
 }
 
-#combat-enemy-card { top: 20px; left: 16px; }
-#combat-player-card { bottom: 22px; right: 16px; }
+#combat-enemy-card { top: 148px; right: 16px; }
+#combat-player-card { bottom: 22px; left: 16px; }
+#combat-boss-status-card { top: 148px; left: 16px; }
 
 .battle-card-name { font-size: 15px; font-weight: bold; color: #111; margin-bottom: 5px; }
 #combat-enemy-card .battle-card-name { color: #8b0000; }
@@ -236,13 +237,13 @@ body {
 .battle-hp-num { font-size: 11px; color: #333; text-align: right; margin-top: 3px; }
 
 #combat-enemy-sprite {
-  position: absolute; top: 16px; right: 60px;
+  position: absolute; top: 8px; right: 48px;
   width: 130px; height: 130px;
   display: flex; align-items: center; justify-content: center; z-index: 5;
 }
 
 #combat-enemy-sprite-2 {
-  position: absolute; top: 20px; right: 210px;
+  position: absolute; top: 8px; right: 192px;
   width: 120px; height: 120px;
   display: flex; align-items: center; justify-content: center; z-index: 5;
 }
@@ -260,7 +261,7 @@ body {
 }
 
 #combat-player-sprite {
-  position: absolute; bottom: 36px; left: 44px;
+  position: absolute; bottom: 95px; left: 56px;
   width: 115px; height: 115px;
   display: flex; align-items: center; justify-content: center; z-index: 5;
 }

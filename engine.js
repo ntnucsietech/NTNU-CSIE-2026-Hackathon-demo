@@ -771,13 +771,22 @@ function _pickEnemy(x, y) {
     }
     if (_filtered.length > 0) tier = _filtered;
   }
-  var posRng = makeRng(MAP_SEED * 10000 + y * 1000 + x);
+  var _seed = (typeof MAP_SEED !== "undefined") ? MAP_SEED : 0;
+  var posRng = makeRng(_seed * 10000 + y * 1000 + x);
   return tier[Math.floor(posRng() * tier.length)];
 }
 
 // 根據 x 座標決定敵人強度分級；tileEnemyMap 可指定特定怪物
 function triggerEnemy(x, y) {
   var ed = _pickEnemy(x, y);
+  if (!ed) {
+    // No valid enemy data — remove tile silently
+    currentMap[y][x] = MAP_TILE.EMPTY;
+    renderMap();
+    return;
+  }
+  // Reset any leftover combat state before starting a new fight
+  activeClones = []; savedBoss = null; pairedFightEnemy = null;
   currentEnemy = {
     x: x, y: y,
     name: ed.name, hp: ed.hp, maxHp: ed.maxHp,
@@ -1118,6 +1127,23 @@ function updateCombatEnemyHp() {
   }
 
   updateCombatHint();
+  updateBossStatusCard();
+}
+
+function updateBossStatusCard() {
+  var card = document.getElementById("combat-boss-status-card");
+  if (!card) return;
+  if (savedBoss) {
+    card.style.display = "block";
+    var nameEl = document.getElementById("boss-status-name");
+    var fillEl = document.getElementById("boss-status-hp-fill");
+    var numEl  = document.getElementById("boss-status-hp-num");
+    if (nameEl) nameEl.textContent = savedBoss.name + "（等待中）";
+    if (fillEl) fillEl.style.width = (savedBoss.hp / savedBoss.maxHp * 100) + "%";
+    if (numEl)  numEl.textContent  = savedBoss.hp + " / " + savedBoss.maxHp;
+  } else {
+    card.style.display = "none";
+  }
 }
 
 function updateCombatHint() {
@@ -1169,7 +1195,16 @@ function executeCombatRound(action) {
     playerFullTokens--; playerFlashTokens++;
     updateTokenDisplay();
     logMessage("🔄 回合傳遞！（◆→◈）");
-    setTimeout(function() { processAllyTurns(runEnemyPhase); }, 400);
+    // Let ONE ally act, then re-enable player buttons if tokens remain
+    setTimeout(function() {
+      processAllyTurns(function() {
+        if (playerFullTokens + playerFlashTokens > 0) {
+          setCombatButtonsEnabled(true);
+        } else {
+          runEnemyPhase();
+        }
+      });
+    }, 400);
     return;
   }
 
@@ -1266,8 +1301,12 @@ function executeCombatRound(action) {
     else if (result.loseTurn)  logMessage("⚠ 攻擊被無效化！額外失去一個圖示！");
     consumePlayerToken(result.bonusTurn, result.loseTurn);
     updateTokenDisplay();
-    // 玩家行動一次 → 同伴接力 → 敵方回合（不循環回玩家）
-    setTimeout(function() { processAllyTurns(runEnemyPhase); }, 600);
+    // If tokens remain, player keeps acting; only go to enemy when all tokens exhausted
+    if (playerFullTokens + playerFlashTokens > 0) {
+      setCombatButtonsEnabled(true);
+    } else {
+      setTimeout(function() { processAllyTurns(runEnemyPhase); }, 600);
+    }
     return;
   }
 
@@ -1315,12 +1354,15 @@ function startCloneFight(clones) {
   isPlayerDefending = false;
   logMessage("💡 分身登場！使用「連斬」可一次消滅所有分身！");
   setCombatButtonsEnabled(true);
+  // Show the waiting boss HP card
+  updateBossStatusCard();
 }
 
 // 分身全滅後恢復 Boss
 function resumeBossFight() {
   currentEnemy = savedBoss;
   savedBoss    = null;
+  updateBossStatusCard();  // Hide the boss status card
   logMessage("⚠️ 分身全數消滅！黑暗魔王繼續戰鬥！");
   var eimg = document.getElementById("battle-enemy-img");
   if (eimg) eimg.src = "assets/boss.png";
@@ -1730,7 +1772,7 @@ function runNextEnemyTurn() {
     isPlayerDefending = false; allyShieldActive = false;
     if (shielded) {
       dmg = Math.floor(dmg / 2);
-      logMessage("🛡️ 防禦！「" + attacker.name + "」攻擊削半！");
+      logMessage("🛡️ 防禦！「" + attacker.name + "」攻擊削半，實際受到 " + dmg + " 點傷害！");
     }
     var taunt = knightTauntActive; knightTauntActive = false;
     if (taunt && dmg > 0) {
@@ -1747,7 +1789,7 @@ function runNextEnemyTurn() {
       }
     }
     if (dmg > 0) { updatePlayerHp(-dmg); showDamagePopup(attacker.name, dmg, true); }
-    logMessage(res.message || "");
+    if (!shielded) logMessage(res.message || "");
     if (currentPlayer.hp <= 0) {
       logMessage("💀 你被打倒了..."); playSound("defeat");
       setTimeout(function() { triggerGameOver(); }, 1500); return;
@@ -1865,7 +1907,7 @@ function runNextEnemyTurn() {
   allyShieldActive  = false;
   if (shielded2) {
     dmg = Math.floor(dmg / 2);
-    logMessage(currentEnemy.name + " 攻擊，但防禦/護盾減少了傷害！");
+    logMessage("🛡️ " + currentEnemy.name + " 攻擊，防禦/護盾削半！實際受到 " + dmg + " 點傷害！");
   }
 
   var taunt = knightTauntActive;
@@ -1891,7 +1933,7 @@ function runNextEnemyTurn() {
   }
 
   if (dmg > 0) { updatePlayerHp(-dmg); showDamagePopup(currentEnemy.name, dmg, true); }
-  logMessage(res.message || "");
+  if (!shielded2) logMessage(res.message || "");
 
   // 狂暴濺射：範圍波及所有存活同伴各 10 HP
   if (res.aoeSplash && currentAllies.length > 0) {
@@ -1980,11 +2022,11 @@ function showDamagePopup(attackerName, damage, targetIsPlayer) {
   el.textContent = attackerName + " ▶ " + damage;
   var rnd = Math.random();
   if (targetIsPlayer) {
-    el.style.left = (50 + Math.floor(rnd * 60)) + "px";
-    el.style.top  = (150 + Math.floor(rnd * 35)) + "px";
+    el.style.left = (60 + Math.floor(rnd * 90)) + "px";
+    el.style.top  = (180 + Math.floor(rnd * 80)) + "px";
   } else {
-    el.style.right = (65 + Math.floor(rnd * 55)) + "px";
-    el.style.top   = (95 + Math.floor(rnd * 40)) + "px";
+    el.style.right = (50 + Math.floor(rnd * 80)) + "px";
+    el.style.top   = (10 + Math.floor(rnd * 80)) + "px";
   }
   field.appendChild(el);
   setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 1400);

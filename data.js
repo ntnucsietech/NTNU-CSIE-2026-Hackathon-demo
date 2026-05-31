@@ -19,7 +19,7 @@ var enemies = [
   { name: "哥布林",   hp: 42,  maxHp: 42,  atk:  9, def: 3,  reward: { money: 22 } },
   { name: "狼人",     hp: 60,  maxHp: 60,  atk: 10, def: 4,  reward: { money: 27 } },
   { name: "泥巴怪",   hp: 56,  maxHp: 56,  atk: 13, def: 5,  reward: { money: 28 } },
-  { name: "惡魔蝙蝠",hp: 38,  maxHp: 38,  atk: 12, def: 2,  reward: { money: 25 } }
+  { name: "惡魔蝙蝠", hp: 38,  maxHp: 38,  atk: 12, def: 2,  reward: { money: 25 } }
 ];
 
 // ── 敵人（B 區 Tier 2）────────────────────────────────────────
@@ -40,7 +40,7 @@ var enemiesTier3 = [
 // ── 最終 Boss ─────────────────────────────────────────────────
 // HP 500；血量低於 60% 時召喚 3 個分身（各 HP 40）
 var finalBoss = {
-  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 53, def: 42,
+  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 53, def: 35,
   reward: { money: 150 }
 };
 

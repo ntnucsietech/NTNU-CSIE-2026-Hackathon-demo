@@ -62,6 +62,18 @@
 
     <div id="combat-field">
 
+      <!-- Boss HP shown while clones are active -->
+      <div class="battle-info-card" id="combat-boss-status-card" style="display:none">
+        <div class="battle-card-name" id="boss-status-name" style="color:#8b0000">黑暗魔王（等待中）</div>
+        <div class="battle-hp-row">
+          <span class="battle-hp-label">HP</span>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar-fill enemy-bar" id="boss-status-hp-fill"></div>
+          </div>
+        </div>
+        <div class="battle-hp-num" id="boss-status-hp-num"></div>
+      </div>
+
       <div class="battle-info-card" id="combat-enemy-card">
         <div class="battle-card-name" id="enemy-name">敵人名稱</div>
         <div class="battle-hp-row">
