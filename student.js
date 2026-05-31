@@ -308,7 +308,7 @@ function spawnMgEnemy() {
   var ry = Math.floor(Math.random() * (areaH - size));
 
   var enemyEl    = document.createElement("img");
-  enemyEl.src    = "assets/enemy.png";
+  enemyEl.src    = "assets/picture/enemy.png";
   enemyEl.className = "mg-enemy";
   enemyEl.style.left = rx + "px";
   enemyEl.style.top  = ry + "px";

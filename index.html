@@ -62,18 +62,6 @@
 
     <div id="combat-field">
 
-      <!-- Boss HP shown while clones are active -->
-      <div class="battle-info-card" id="combat-boss-status-card" style="display:none">
-        <div class="battle-card-name" id="boss-status-name" style="color:#8b0000">黑暗魔王（等待中）</div>
-        <div class="battle-hp-row">
-          <span class="battle-hp-label">HP</span>
-          <div class="hp-bar-wrap">
-            <div class="hp-bar-fill enemy-bar" id="boss-status-hp-fill"></div>
-          </div>
-        </div>
-        <div class="battle-hp-num" id="boss-status-hp-num"></div>
-      </div>
-
       <div class="battle-info-card" id="combat-enemy-card">
         <div class="battle-card-name" id="enemy-name">敵人名稱</div>
         <div class="battle-hp-row">
@@ -95,13 +83,13 @@
       </div>
 
       <div id="combat-enemy-sprite">
-        <img src="assets/enemy.png" id="battle-enemy-img" class="battle-sprite enemy-sprite-img"
+        <img src="assets/picture/enemy.png" id="battle-enemy-img" class="battle-sprite enemy-sprite-img"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span class="battle-fallback-emoji" style="display:none">👺</span>
       </div>
 
       <div id="combat-enemy-sprite-2" style="display:none">
-        <img src="assets/enemy.png" class="battle-sprite enemy-sprite-img"
+        <img src="assets/picture/enemy.png" class="battle-sprite enemy-sprite-img"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span class="battle-fallback-emoji" style="display:none">👺</span>
       </div>
@@ -109,7 +97,7 @@
       <div id="combat-hint"></div>
 
       <div id="combat-player-sprite">
-        <img src="assets/player.png" class="battle-sprite player-sprite-img"
+        <img src="assets/picture/player.png" class="battle-sprite player-sprite-img"
              onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <span class="battle-fallback-emoji" style="display:none">🧙</span>
       </div>
@@ -253,6 +241,7 @@
   <script src="data.js"></script>
   <script src="engine.js"></script>
   <script src="student.js"></script>
+  <script src="audio.js"></script>
 
   <script>
     function openShopFromHUD() {

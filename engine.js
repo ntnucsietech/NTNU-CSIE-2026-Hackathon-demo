@@ -588,7 +588,7 @@ function renderMap() {
         if (x === player.x && y === player.y) {
           tile.classList.add("tile--player");
           var img = document.createElement("img");
-          img.src = "assets/player.png"; img.alt = "玩家"; img.className = "sprite";
+          img.src = "assets/picture/player.png"; img.alt = "玩家"; img.className = "sprite";
           tile.appendChild(img);
         } else {
           applyTileStyle(tile, currentMap[y][x]);
@@ -620,12 +620,12 @@ function applyTileStyle(tile, tileType) {
   var sm = {};
   sm[MAP_TILE.WALL]       = { cls: "tile--wall",     src: "",                 alt: "",       emoji: ""   };
   sm[MAP_TILE.EMPTY]      = { cls: "tile--empty",    src: "",                 alt: "",       emoji: ""   };
-  sm[MAP_TILE.CHEST]      = { cls: "tile--chest",    src: "assets/chest.png", alt: "寶箱",   emoji: "📦" };
-  sm[MAP_TILE.ENEMY]      = { cls: "tile--enemy",    src: "assets/enemy.png", alt: "敵人",   emoji: "👺" };
-  sm[MAP_TILE.DOOR]       = { cls: "tile--door",     src: "assets/door.png",  alt: "門",     emoji: "🚪" };
+  sm[MAP_TILE.CHEST]      = { cls: "tile--chest",    src: "assets/picture/chest.png", alt: "寶箱",   emoji: "📦" };
+  sm[MAP_TILE.ENEMY]      = { cls: "tile--enemy",    src: "assets/picture/enemy.png", alt: "敵人",   emoji: "👺" };
+  sm[MAP_TILE.DOOR]       = { cls: "tile--door",     src: "assets/picture/door.png",  alt: "門",     emoji: "🚪" };
   sm[MAP_TILE.MINI_GAME]  = { cls: "tile--minigame", src: "",                 alt: "小遊戲", emoji: "🌀" };
   sm[MAP_TILE.SHOP]       = { cls: "tile--shop",     src: "",                 alt: "商店",   emoji: "🛒" };
-  sm[MAP_TILE.FINAL_BOSS] = { cls: "tile--boss",     src: "assets/boss.png",  alt: "魔王",   emoji: "👿" };
+  sm[MAP_TILE.FINAL_BOSS] = { cls: "tile--boss",     src: "assets/picture/boss.png",  alt: "魔王",   emoji: "👿" };
   sm[MAP_TILE.PORTAL]     = { cls: "tile--portal",   src: "",                 alt: "傳送門", emoji: "⚡" };
 
   var info = sm[tileType];
@@ -1052,7 +1052,7 @@ function startCombat() {
   updateCombatEnemyHp();
 
   var enemyImg = document.getElementById("battle-enemy-img");
-  if (enemyImg) enemyImg.src = currentEnemy.isFinalBoss ? "assets/boss.png" : "assets/enemy.png";
+  if (enemyImg) enemyImg.src = currentEnemy.isFinalBoss ? "assets/picture/boss.png" : "assets/picture/enemy.png";
 
   document.getElementById("combat-player-name").textContent = currentPlayer.name;
 
@@ -1297,9 +1297,7 @@ function executeCombatRound(action) {
   }
 
   if (COMBAT_MODE === "press_turn") {
-    if      (result.bonusTurn) logMessage("★ 弱點命中！圖示轉為閃爍，獲得額外行動！");
-    else if (result.loseTurn)  logMessage("⚠ 攻擊被無效化！額外失去一個圖示！");
-    consumePlayerToken(result.bonusTurn, result.loseTurn);
+    consumePlayerToken(false, false);
     updateTokenDisplay();
     // If tokens remain, player keeps acting; only go to enemy when all tokens exhausted
     if (playerFullTokens + playerFlashTokens > 0) {
@@ -1347,7 +1345,7 @@ function startCloneFight(clones) {
   var ename = document.getElementById("enemy-name");
   if (ename) ename.textContent = "魔王分身 ×" + activeClones.length;
   var eimg = document.getElementById("battle-enemy-img");
-  if (eimg) eimg.src = "assets/enemy.png";
+  if (eimg) eimg.src = "assets/picture/enemy.png";
   var sprite2 = document.getElementById("combat-enemy-sprite-2");
   if (sprite2) sprite2.style.display = activeClones.length > 1 ? "flex" : "none";
   updateCombatEnemyHp();
@@ -1365,7 +1363,7 @@ function resumeBossFight() {
   updateBossStatusCard();  // Hide the boss status card
   logMessage("⚠️ 分身全數消滅！黑暗魔王繼續戰鬥！");
   var eimg = document.getElementById("battle-enemy-img");
-  if (eimg) eimg.src = "assets/boss.png";
+  if (eimg) eimg.src = "assets/picture/boss.png";
   var ename = document.getElementById("enemy-name");
   if (ename) ename.textContent = currentEnemy.name;
   var sprite2 = document.getElementById("combat-enemy-sprite-2");
@@ -1436,9 +1434,7 @@ function showAllyActionFor(live, idx, callback) {
           playerFlashTokens = Math.max(0, playerFlashTokens - 1);
         }
       } else {
-        var bt = allyResult && allyResult.bonusTurn;
-        var lt = allyResult && allyResult.loseTurn;
-        consumePlayerToken(bt, lt);
+        consumePlayerToken(false, false);
       }
       updateTokenDisplay();
     }
@@ -1503,7 +1499,6 @@ function executeAllyAction(ally, action) {
     var critMsg = "";
     if (ally.critChance && Math.random() < ally.critChance) {
       dmg *= 2; critMsg = " 💥爆擊！";
-      allyResult.bonusTurn = true; // 暴擊觸發 Press Turn bonus
     }
     dealDmgToEnemy(target, dmg);
     showDamagePopup(ally.icon + ally.name, dmg, false);
@@ -1795,8 +1790,7 @@ function runNextEnemyTurn() {
       setTimeout(function() { triggerGameOver(); }, 1500); return;
     }
     if (COMBAT_MODE === "press_turn") {
-      if (res.bonusTurn) logMessage("★ 敵人暴擊！獲得額外行動！");
-      consumeEnemyToken(res.bonusTurn, res.loseTurn);
+      consumeEnemyToken(false, false);
       updateTokenDisplay();
       if (enemyFullTokens + enemyFlashTokens > 0) { setTimeout(function() { runNextEnemyTurn(); }, 800); return; }
       startNewCombatRound();
@@ -1961,9 +1955,7 @@ function runNextEnemyTurn() {
   }
 
   if (COMBAT_MODE === "press_turn") {
-    if      (res.bonusTurn) logMessage("★ 敵人弱點命中！獲得額外行動！");
-    else if (res.loseTurn)  logMessage("⚠ 敵人攻擊被無效化！額外失去一個圖示！");
-    consumeEnemyToken(res.bonusTurn, res.loseTurn);
+    consumeEnemyToken(false, false);
     updateTokenDisplay();
     if (enemyFullTokens + enemyFlashTokens > 0) { setTimeout(function() { runNextEnemyTurn(); }, 800); return; }
     startNewCombatRound();
