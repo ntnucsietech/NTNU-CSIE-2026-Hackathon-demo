@@ -186,8 +186,8 @@ body {
   width: 100%; max-width: 860px; height: 380px;
   position: relative; flex-shrink: 0;
   background: linear-gradient(180deg,
-    #1a2a4a 0%, #243555 40%,
-    #3d2e1a 60%, #2a1e0a 100%);
+    #1a2a4a 0%, #243555 50%,
+    #1e3060 100%);
   border-bottom: 4px solid #050810;
   overflow: hidden;
 }
@@ -195,7 +195,7 @@ body {
 #combat-field::before {
   content: '';
   position: absolute; bottom: 0; left: 0; right: 0; height: 38%;
-  background: linear-gradient(180deg, transparent 0%, rgba(50,35,10,0.5) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(10,20,50,0.4) 100%);
   pointer-events: none;
 }
 
