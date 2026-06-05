@@ -37,17 +37,26 @@ var AudioSystem = (function () {
   //  ── 學員可自行新增 ─────────────────────────────────────
   //    在 student.js 裡呼叫 playSound("your_name") 並在此補上路徑即可
   // ============================================================
+  //  SFX_CONFIG 支援兩種格式：
+  //    "path/to/file.mp3"               → 使用預設音量 1.0
+  //    { src: "path/to/file.mp3", volume: 0.8 } → 個別音量（0.0 ~ 1.0）
   var SFX_CONFIG = {
-    encounter : null,   // 尚無音檔
-    attack    : null,
-    victory   : null,
-    defeat    : null,
-    flee      : null,
-    chest     : null,
-    key       : null,
-    // ↓ 學員新增音效範例（取消註解並放入對應音檔即可）
-    // level_up  : "assets/audio/sfx_levelup.mp3",
-    // shop_buy  : "assets/audio/sfx_buy.mp3",
+    encounter  : null,   // 尚無音檔
+    shield     : null,
+    dodge      : { src: "assets/audio/SFX/dodge.mp3",  volume: 0.5 },
+    attack     : { src: "assets/audio/SFX/attack.wav", volume: 1.0 },
+    flash_token: { src: "assets/audio/SFX/flash.wav",  volume: 0.8 },
+    victory    : null,
+    defeat     : null,
+    flee       : null,
+    chest      : { src: "assets/audio/SFX/open_chest.mp3", volume: 0.5 },
+    locked_door: { src: "assets/audio/SFX/locked.mp3",        volume: 1.0 },
+    unlock_door: { src: "assets/audio/SFX/open_the_door.mp3", volume: 1.0 },
+    teleport   : { src: "assets/audio/SFX/teleport.mp3",   volume: 1.0 },
+    buy        : { src: "assets/audio/SFX/buy.wav",        volume: 1.0 },
+    //小遊戲
+    shot       : { src: "assets/audio/SFX/shot.wav",       volume: 1.0 },
+    key        : null,
   };
 
   // 音效主音量 0.0 ~ 1.0
@@ -111,8 +120,8 @@ var AudioSystem = (function () {
       loopEnd   : null
     },
     minigame: {
-      src       : null,   // 尚無音檔
-      volume    : 0.7,
+      src       : "assets/audio/mini_game.mp3",
+      volume    : 0.9,
       loopStart : 0,
       loopEnd   : null
     },
@@ -177,12 +186,16 @@ var AudioSystem = (function () {
     if (ctx && ctx.state === "suspended") ctx.resume();
   }
 
+  // ── SFX 設定解析（支援字串或物件）────────────────────────
+  function _sfxSrc(cfg)    { return cfg && (typeof cfg === "string" ? cfg : cfg.src);    }
+  function _sfxVolume(cfg) { return cfg && typeof cfg === "object" && cfg.volume != null ? cfg.volume : 1.0; }
+
   // ── 批次預載 ──────────────────────────────────────────────
   function _preloadAll() {
     if (!ctx) return;
     for (var sfxName in SFX_CONFIG) {
       (function (n) {
-        _loadBuffer(SFX_CONFIG[n], function (buf) {
+        _loadBuffer(_sfxSrc(SFX_CONFIG[n]), function (buf) {
           sfxBuffers[n] = buf;
         });
       })(sfxName);
@@ -207,11 +220,13 @@ var AudioSystem = (function () {
         ctx.decodeAudioData(
           xhr.response,
           function (buf) { callback(buf); },
-          function ()    { /* 解碼失敗靜默 */ }
+          function (e)   { console.warn("[AudioSystem] 解碼失敗：" + url, e); }
         );
+      } else {
+        console.warn("[AudioSystem] HTTP 錯誤 " + xhr.status + "：" + url);
       }
     };
-    xhr.onerror = function () { /* 找不到檔案靜默 */ };
+    xhr.onerror = function () { console.warn("[AudioSystem] 找不到檔案：" + url); };
     xhr.send();
   }
 
@@ -222,16 +237,21 @@ var AudioSystem = (function () {
 
   /**
    * 播放一次性音效。
-   * @param {string} name  SFX_CONFIG 中的鍵名
+   * @param {buy} name  SFX_CONFIG 中的鍵名
+   * @param {shot} name
+   * @param {chest} name
+   * @param {dodge} name
+   * @param {teleport} name
    */
   function playSfx(name) {
     if (!ctx || !sfxBuffers[name]) return;
     _resumeContext();
 
+    var cfg    = SFX_CONFIG[name];
     var source = ctx.createBufferSource();
     var gain   = ctx.createGain();
-    source.buffer    = sfxBuffers[name];
-    gain.gain.value  = sfxMasterVolume;
+    source.buffer   = sfxBuffers[name];
+    gain.gain.value = _sfxVolume(cfg) * sfxMasterVolume;
     source.connect(gain);
     gain.connect(ctx.destination);
     source.start(0);
@@ -245,6 +265,18 @@ var AudioSystem = (function () {
     sfxMasterVolume = Math.max(0, Math.min(1, Number(vol) || 0));
   }
 
+  /**
+   * 設定單一音效的個別音量（下次播放時生效）。
+   * @param {string} name  SFX_CONFIG 中的鍵名
+   * @param {number} vol   0.0（靜音）～ 1.0（最大）
+   */
+  function setSfxEntryVolume(name, vol) {
+    if (!(name in SFX_CONFIG)) return;
+    var cfg = SFX_CONFIG[name];
+    var src = _sfxSrc(cfg);
+    SFX_CONFIG[name] = { src: src, volume: Math.max(0, Math.min(1, Number(vol) || 0)) };
+  }
+
 
   // ============================================================
   //  背景音樂 (BGM) 公開函式
@@ -252,7 +284,7 @@ var AudioSystem = (function () {
 
   /**
    * 播放指定 BGM 音軌（與目前相同時不重播）。
-   * @param {string} trackName  BGM_TRACKS 中的鍵名
+   * @param {minigame} trackName  BGM_TRACKS 中的鍵名
    */
   function playBgm(trackName) {
     if (!ctx) return;
@@ -318,11 +350,20 @@ var AudioSystem = (function () {
   }
 
   /**
-   * 停止目前播放的 BGM。
+   * 停止目前播放的 BGM（含 0.3 秒淡出）。
    */
   function stopBgm() {
     if (currentBgmSource) {
-      try { currentBgmSource.stop(); } catch (e) {}
+      var FADE = 0.3;
+      var src  = currentBgmSource;
+      var gain = currentBgmGain;
+      if (gain && ctx) {
+        gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE);
+      }
+      setTimeout(function() {
+        try { src.stop(); } catch (e) {}
+      }, FADE * 1000 + 20);
       currentBgmSource = null;
       currentBgmGain   = null;
     }
@@ -407,6 +448,7 @@ var AudioSystem = (function () {
     // 音效
     playSfx          : playSfx,
     setSfxVolume     : setSfxVolume,
+    setSfxEntryVolume: setSfxEntryVolume,
     // BGM
     playBgm          : playBgm,
     stopBgm          : stopBgm,
@@ -424,7 +466,6 @@ var AudioSystem = (function () {
 
 
 // ============================================================
-//  ── 接管 engine.js 的 playSound stub ─────────────────────
 //  engine.js 定義了空的 playSound(name){}，此處替換為真正的實作。
 // ============================================================
 function playSound(name) {

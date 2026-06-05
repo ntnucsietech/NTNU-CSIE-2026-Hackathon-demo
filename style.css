@@ -15,7 +15,16 @@ body {
   overflow: hidden;
 }
 
-#screen-map,
+#screen-map {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  min-height: 100vh;
+  padding: 16px;
+}
+
 #screen-combat,
 #screen-shop,
 #screen-minigame,
@@ -32,60 +41,401 @@ body {
 
 
 /* ══════════════════════════════════════════════════════════════
-   迷宮地圖畫面
+   迷宮地圖畫面 — 左右佈局（全高）
    ══════════════════════════════════════════════════════════════ */
 
-#hud {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-  background-color: #16213e;
-  border: 2px solid #0f3460;
-  border-radius: 12px;
-  padding: 8px 18px;
-  margin-bottom: 10px;
-  width: 100%;
-  max-width: 680px;
-  flex-wrap: wrap;
+#screen-map {
+  padding: 0;
+  justify-content: center;
+  height: 100vh;
+  align-self: stretch;
 }
 
-.hud-item {
+/* 整體左右容器：填滿螢幕高度 */
+#map-layout {
   display: flex;
   flex-direction: row;
-  align-items: center;
-  gap: 5px;
-  font-size: 14px;
+  align-items: stretch;
+  gap: 14px;
+  height: 100vh;
+  padding: 16px 24px;
+  box-sizing: border-box;
 }
 
-.hud-label { color: #a0a8c0; font-size: 12px; }
+/* 左側地圖欄：垂直置中 viewport */
+#map-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  top:10vh;
+  flex-shrink: 0;
+  gap: 8px;
+}
 
-#map-message {
-  background-color: rgba(15, 52, 96, 0.9);
-  color: #ffd700;
-  border: 1px solid #ffd700;
-  border-radius: 8px;
-  padding: 8px 18px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  min-height: 36px;
-  text-align: center;
-  max-width: 680px;
-  width: 100%;
-  opacity: 0;
-  transition: opacity 0.3s;
+/* viewport wrap：相對定位，讓 map-message 可以浮蓋 */
+#map-viewport-wrap {
+  position: relative;
+  width: 540px;
+  flex-shrink: 0;
 }
 
 /* 視窗容器（9 格 × 60px = 540px） */
 #viewport {
   width: 540px;
   height: 540px;
-  max-width: 100%;
   border: 3px solid #0f3460;
   border-radius: 4px;
   overflow: hidden;
   position: relative;
 }
+
+/* 提示訊息：絕對定位浮蓋在 viewport 上方 */
+#map-message {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background-color: rgba(10, 20, 50, 0.92);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  border-radius: 8px;
+  padding: 6px 18px;
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* 右側面板：全高、column flex */
+#map-right {
+  display: flex;
+  flex-direction: column;
+  top:10vh;
+  position: relative;
+  gap: 10px;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+/* ── 右側：資源 + 按鈕 + 隊伍 ───────────────────────── */
+#side-stats {
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 10px;
+  padding: 10px 12px;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.side-section-title {
+  display: block;
+  font-size: 11px;
+  color: #7a8aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 7px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #1e3560;
+}
+
+.side-resource-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.side-resource-label {
+  color: #a0a8c0;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+/* 資源區左右分欄 */
+#side-stats-top {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 6px;
+  width: 220px;
+}
+#side-resources {
+  align-items: space-around;
+  flex: 1;
+  min-width: 0;
+}
+#side-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+/* 背包 / 商店 / 程式碼 按鈕 */
+.btn-side-action {
+  display: block;
+  width: auto;
+  text-align: center;
+  padding: 3px 6px;
+  font-size: 10px;
+  background: #1e3560;
+  color: #c8d8f8;
+  border: 1px solid #2a4880;
+  border-radius: 6px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-side-action:hover { background: #2a4880; }
+.btn-side-action.btn-side-shop { background: #1a3a20; border-color: #2a6030; color: #80c898; }
+.btn-side-action.btn-side-shop:hover { background: #2a5030; }
+.btn-side-action.btn-side-code { background: #3a3000; border-color: #806010; color: #ffd700; }
+.btn-side-action.btn-side-code:hover { background: #504010; }
+
+/* 隊伍成員卡片 */
+.side-member-card {
+  background: #1a2a45;
+  border: 1px solid #243860;
+  border-radius: 6px;
+  padding: 6px 8px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+.side-member-card:last-child { margin-bottom: 0; }
+
+.side-member-name {
+  font-size: 12px;
+  font-weight: bold;
+  color: #c8d8f0;
+  margin-bottom: 4px;
+}
+
+.side-member-bar-wrap {
+  background: #0d1a30;
+  border-radius: 3px;
+  height: 4px;
+  margin-bottom: 4px;
+  overflow: hidden;
+}
+
+.side-member-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.side-member-bar-fill.bar--player { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+.side-member-bar-fill.bar--ally   { background: linear-gradient(90deg, #1565c0, #42a5f5); }
+.side-member-bar-fill.bar--low    { background: linear-gradient(90deg, #b71c1c, #ef5350); }
+
+.side-member-stats { display: flex; gap: 8px; color: #7090b8; font-size: 11px; }
+.side-member-ko    { opacity: 0.45; }
+
+/* ── 右側：小地圖（自然高度）──────────────────────── */
+#side-minimap {
+  background: #16213e;
+  border: 2px solid #0f3460;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 小地圖標題列（標題 + 放大按鈕同行） */
+.side-minimap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.btn-minimap-expand {
+  max-width: 50px;
+  background: transparent;
+  border: 1px solid #2a4880;
+  border-radius: 4px;
+  color: #7a9ac0;
+  font-size: 10px;
+  padding: 1px 4px;
+  cursor: pointer;
+  line-height: 1.2;
+  flex: 0 0 auto;
+  align-self: center;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-minimap-expand:hover { background: #1e3560; color: #c8d8f8; }
+
+#minimap-canvas {
+  display: block;
+  width:auto;
+  height: auto;
+  border: 1px solid #1e3560;
+  border-radius: 3px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+}
+
+/* ── 小地圖全螢幕 Overlay ────────────────────────────── */
+#minimap-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#minimap-overlay-bg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: pointer;
+}
+
+#minimap-overlay-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+#minimap-overlay-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+#minimap-legend {
+  background: rgba(16, 24, 48, 0.92);
+  border: 1px solid #1e3560;
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 120px;
+  align-self: center;
+}
+
+.legend-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #a0b8d8;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1e3560;
+  margin-bottom: 2px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #c8d8f0;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+#minimap-viewport {
+  position: relative;
+  width:  min(68vw, 680px);
+  height: min(68vh, 560px);
+  overflow: hidden;
+  border: 2px solid #0f3460;
+  border-radius: 6px;
+  box-shadow: 0 0 40px rgba(15, 52, 96, 0.8);
+  background: #050810;
+  cursor: grab;
+}
+
+#minimap-canvas-large {
+  display: block;
+  position: absolute;
+  top: 0; left: 0;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#minimap-pan-hint {
+  font-size: 12px;
+  color: #6888b8;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+#minimap-pan-hint kbd {
+  background: #1e3560;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 11px;
+  color: #a0c0e8;
+}
+
+.btn-minimap-close {
+  background: #1e3560;
+  border: 1px solid #0f3460;
+  color: #c8d8f8;
+  border-radius: 8px;
+  padding: 8px 28px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-minimap-close:hover { background: #2a4880; }
+
+/* ── 背包 Overlay ────────────────────────────────────────── */
+#inventory-overlay {
+  position: absolute; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+#inventory-overlay-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(2px);
+}
+#inventory-overlay-content {
+  position: relative; z-index: 1;
+  background: #0a1020; border: 2px solid #1e3560;
+  border-radius: 12px; padding: 24px 28px;
+  min-width: 280px; max-width: 420px; width: 90%;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 0 40px rgba(15,52,96,0.8);
+}
+#inventory-overlay-title {
+  font-size: 18px; font-weight: bold; color: #c8d8f8;
+  border-bottom: 1px solid #1e3560; padding-bottom: 10px;
+}
+#inventory-overlay-list {
+  display: flex; flex-direction: column; gap: 8px;
+  max-height: 50vh; overflow-y: auto;
+}
+.inventory-overlay-empty {
+  color: #5a7a9a; font-size: 13px; text-align: center; padding: 16px 0;
+}
+.inventory-overlay-row {
+  display: flex; align-items: baseline; gap: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid #1e3560;
+  border-radius: 8px; padding: 8px 12px;
+}
+.inv-row-name  { font-size: 13px; color: #e0e8ff; font-weight: bold; flex-shrink: 0; }
+.inv-row-desc  { font-size: 11px; color: #7a9ac0; flex: 1; }
+.inv-row-qty   { font-size: 13px; color: #ffd700; font-weight: bold; flex-shrink: 0; }
 
 #game-board {
   display: flex;
@@ -93,6 +443,7 @@ body {
   flex-wrap: wrap;
   position: absolute;
   top: 0; left: 0;
+  transform-origin: 0 0;  /* scale 從左上角展開 */
   transition: transform 0.12s ease;
 }
 
@@ -122,7 +473,7 @@ body {
 
 .tile--empty    { background-color: #1e2a45; }
 .tile--wall     { background-color: #0a0f1e; border: 1px solid #0d1526; }
-.tile--chest    { background-color: #1e2a45; cursor: pointer; }
+.tile--chest    { background-color: #1e2a45; }
 .tile--enemy    { background-color: #2a1e1e; }
 .tile--door     { background-color: #1e1a2a; }
 .tile--minigame { background-color: #1a2240; }
@@ -150,10 +501,8 @@ body {
   user-select: none;
 }
 
-.tile:not(.tile--hidden):not(.tile--wall):hover .sprite,
-.tile:not(.tile--hidden):not(.tile--wall):hover .tile-emoji {
-  transform: scale(1.15);
-}
+#game-board { cursor: default; }
+#game-board * { cursor: default !important; }
 
 #controls-hint {
   margin-top: 10px;
@@ -180,14 +529,15 @@ body {
   align-items: center;
   background-color: #0d0d1a;
   padding: 0; gap: 0;
+  position: relative;
 }
 
 #combat-field {
   width: 100%; max-width: 860px; height: 380px;
   position: relative; flex-shrink: 0;
   background: linear-gradient(180deg,
-    #1a2a4a 0%, #243555 50%,
-    #1e3060 100%);
+    #1a2a4a 0%, #243555 40%,
+    #3d2e1a 60%, #2a1e0a 100%);
   border-bottom: 4px solid #050810;
   overflow: hidden;
 }
@@ -195,7 +545,7 @@ body {
 #combat-field::before {
   content: '';
   position: absolute; bottom: 0; left: 0; right: 0; height: 38%;
-  background: linear-gradient(180deg, transparent 0%, rgba(10,20,50,0.4) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(50,35,10,0.5) 100%);
   pointer-events: none;
 }
 
@@ -211,13 +561,57 @@ body {
   box-shadow: 4px 4px 0 #666;
 }
 
-#combat-enemy-card { top: 148px; right: 16px; }
-#combat-player-card { bottom: 22px; left: 16px; }
-#combat-boss-status-card { top: 148px; left: 16px; }
+#combat-enemy-card  { top: 8px; right: 10px; left: auto; min-width: 130px; text-align: center; }
+#combat-boss-status-card { top: 70px; left: 10px; }
 
 .battle-card-name { font-size: 15px; font-weight: bold; color: #111; margin-bottom: 5px; }
 #combat-enemy-card .battle-card-name { color: #8b0000; }
-#combat-player-card .battle-card-name { color: #003399; }
+
+/* ── 己方隊伍區（玩家 + 同伴統一排列） ──────────────────── */
+#combat-party-area {
+  position: absolute; bottom: 20px; left: 10px;
+  display: flex; flex-direction: row; align-items: flex-end; gap: 14px;
+  z-index: 5; pointer-events: none;
+}
+
+.party-unit {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.party-unit-sprite {
+  width: 130px; height: fit-content;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.party-sprite-img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 5px 3px rgba(0,0,0,0.7));
+}
+
+.party-unit-name {
+  font-size: 11px; color: #a8c8f0; text-align: center;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+}
+
+.party-unit--knocked-out {
+  opacity: 0.3; filter: grayscale(1);
+}
+
+/* 輪到該成員行動：精靈發光 + 上移 */
+.party-unit.active-turn {
+  transform: translateY(-4px);
+}
+.party-unit.active-turn .party-sprite-img,
+.party-unit.active-turn .battle-fallback-emoji {
+  filter: drop-shadow(0 0 10px #4caf50) drop-shadow(2px 5px 3px rgba(0,0,0,0.7));
+}
+.party-unit[data-party-type="ally"].active-turn .party-sprite-img,
+.party-unit[data-party-type="ally"].active-turn .battle-fallback-emoji {
+  filter: drop-shadow(0 0 10px #42a5f5) drop-shadow(2px 5px 3px rgba(0,0,0,0.7));
+}
 
 .battle-hp-row { display: flex; align-items: center; gap: 6px; }
 .battle-hp-label { font-size: 11px; font-weight: bold; color: #444; width: 18px; }
@@ -236,16 +630,67 @@ body {
 .player-bar { background: linear-gradient(90deg, #2e7d32, #4caf50); width: 100%; }
 .battle-hp-num { font-size: 11px; color: #333; text-align: right; margin-top: 3px; }
 
-#combat-enemy-sprite {
-  position: absolute; top: 8px; right: 48px;
-  width: 130px; height: 130px;
-  display: flex; align-items: center; justify-content: center; z-index: 5;
+/* ── 動態敵人排列區（由右向左：array[0]=最右） ─────────────── */
+#combat-enemies-area {
+  position: absolute; top: 29px; right: 10px;
+  width: 60%; height: 200px;
+  display: flex; flex-direction: row;
+  align-items: flex-end; justify-content: flex-end;
+  gap: 10px; z-index: 5; pointer-events: none;
 }
 
-#combat-enemy-sprite-2 {
-  position: absolute; top: 8px; right: 192px;
-  width: 120px; height: 120px;
-  display: flex; align-items: center; justify-content: center; z-index: 5;
+/* 單一敵人單位（精靈 + 血條） */
+.enemy-unit {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+
+/* 受擊晃動 */
+@keyframes hit-shake {
+  0%   { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  35%  { transform: translateX(6px); }
+  55%  { transform: translateX(-4px); }
+  75%  { transform: translateX(4px); }
+  90%  { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+.hit-shake {
+  animation: hit-shake 0.5s ease-out;
+}
+
+/* 死亡淡出轉場 */
+.enemy-unit.dying {
+  animation: enemy-unit-die 0.58s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes enemy-unit-die {
+  0%   { opacity: 1;   transform: scale(1)    translateY(0);    filter: brightness(1); }
+  18%  { opacity: 1;   transform: scale(1.1)  translateY(-7px); filter: brightness(2.2) saturate(0); }
+  100% { opacity: 0;   transform: scale(0.55) translateY(14px); filter: brightness(0.4); }
+}
+
+/* 精靈容器 */
+.enemy-unit-sprite {
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* 血條區 */
+.enemy-unit-hpbar {
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
+}
+.enemy-unit-bar-wrap {
+  background-color: #444; border-radius: 3px; height: 6px;
+  overflow: hidden; border: 1px solid #222;
+}
+.enemy-unit-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #d32f2f, #ff5252);
+  transition: width 0.35s ease; min-width: 0;
+}
+.enemy-unit-hp-num {
+  font-size: 9px; color: #bbb; text-align: center; white-space: nowrap;
 }
 
 #combat-hint {
@@ -281,6 +726,166 @@ body {
 
 .battle-fallback-emoji { font-size: 64px; line-height: 1; }
 
+/* ── 玩家精靈：輪到自己時發光 ───────────────────────────── */
+#combat-player-sprite.active-turn img,
+#combat-player-sprite.active-turn .battle-fallback-emoji {
+  filter: drop-shadow(0 0 10px #4caf50) drop-shadow(2px 6px 4px rgba(0,0,0,0.6));
+}
+
+/* ── 同伴戰場精靈區 ──────────────────────────────────────── */
+#combat-allies-area {
+  position: absolute; bottom: 55px; left: 185px;
+  display: flex; flex-direction: row;
+  align-items: flex-end; gap: 14px;
+  z-index: 5; pointer-events: none;
+}
+
+.ally-unit {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 3px;
+  flex-shrink: 0;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.ally-unit-sprite {
+  display: flex; align-items: center; justify-content: center;
+  width: 80px; height: 80px;
+}
+
+/* ally 精靈圖片：不晃動（靜止待機） */
+.ally-sprite-img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 5px 3px rgba(0,0,0,0.7));
+}
+
+.ally-unit-name {
+  font-size: 11px; color: #a8c8f0; text-align: center;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+}
+
+/* 血條：統一成敵人樣式 */
+.ally-unit-hpbar { display: none; }
+
+.ally-unit-bar-wrap {
+  background-color: #444; border-radius: 3px; overflow: hidden;
+  height: 6px; border: 1px solid #222;
+}
+
+.ally-unit-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  transition: width 0.35s ease; min-width: 0;
+}
+
+.ally-unit-hp-num {
+  font-size: 9px; color: #bbb; text-align: center; white-space: nowrap;
+}
+
+.ally-unit--knocked-out {
+  opacity: 0.3; filter: grayscale(1);
+}
+
+/* 輪到同伴時：藍色發光 */
+.ally-unit.active-turn .ally-sprite-img,
+.ally-unit.active-turn .battle-fallback-emoji {
+  filter: drop-shadow(0 0 10px #42a5f5) drop-shadow(2px 5px 3px rgba(0,0,0,0.7));
+}
+.ally-unit.active-turn {
+  transform: translateY(-4px);
+}
+
+/* ── 查看按鈕列 ──────────────────────────────────────────── */
+/* ── 己方全員 HP 列 + 查看按鈕 ──────────────────────────── */
+#party-hp-row {
+  display: flex; flex-direction: row; align-items: flex-start; gap: 8px;
+}
+
+#party-hp-area {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 8px; flex-wrap: wrap; flex: 1;
+  padding: 5px 2px 18px;
+  border-top: 1px solid #1e3560;
+  min-height: 30px;
+}
+
+/* 卡片：直向排列（名字→血量→效果） */
+.party-hp-card {
+  display: flex; flex-direction: column; gap: 3px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #1e3560; border-radius: 8px;
+  padding: 6px 10px; font-size: 12px; color: #c8d8f0;
+  position: relative; min-width: 180px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+              border-color 0.15s ease, background 0.15s ease;
+}
+.party-hp-card--player { border-color: #2a6090; background: rgba(25,65,120,0.18); }
+.party-hp-card.party-knocked-out { opacity: 0.4; border-color: #555; }
+
+/* 1. 名字列 */
+.phc-name {
+  font-size: 13px; font-weight: bold; color: #d8eaff;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 2. 血量列 */
+.phc-hp-row {
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* 3. 效果列 */
+.phc-effects {
+  display: flex; flex-direction: column; gap: 2px; margin-top: 1px;
+}
+.phc-effect {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: bold;
+  border-radius: 4px; padding: 1px 5px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+/* 攻擊 */
+.phc-effect--atk-up { color: #ff8a80; border-color: #b71c1c; background: rgba(183,28,28,0.18); }
+.phc-effect--atk-dn { color: #ff8a80; border-color: #7f0000; background: rgba(100,0,0,0.22); }
+/* 防禦 */
+.phc-effect--def-up { color: #82b1ff; border-color: #1565c0; background: rgba(21,101,192,0.18); }
+.phc-effect--def-dn { color: #82b1ff; border-color: #0d47a1; background: rgba(13,71,161,0.22); }
+/* 速度 */
+.phc-effect--spd-up { color: #b9f6ca; border-color: #2e7d32; background: rgba(46,125,50,0.18); }
+.phc-effect--spd-dn { color: #b9f6ca; border-color: #1b5e20; background: rgba(27,94,32,0.22); }
+
+.party-hp-card--active-player {
+  border-color: #4caf50; background: rgba(46,125,50,0.28);
+  box-shadow: 0 0 12px rgba(76,175,80,0.5);
+  transform: translateY(-2px); z-index: 2;
+}
+.party-hp-card--active-player::after {
+  content: '▼'; position: absolute; bottom: -15px; left: 50%;
+  transform: translateX(-50%); color: #4caf50; font-size: 9px; opacity: 0.85;
+}
+.party-hp-card--active-ally {
+  border-color: #42a5f5; background: rgba(21,101,192,0.28);
+  box-shadow: 0 0 12px rgba(66,165,245,0.5);
+  transform: translateY(-2px); z-index: 2;
+}
+.party-hp-card--active-ally::after {
+  content: '▼'; position: absolute; bottom: -15px; left: 50%;
+  transform: translateX(-50%); color: #42a5f5; font-size: 9px; opacity: 0.85;
+}
+
+.party-mini-bar-wrap {
+  display: inline-block; width: 70%; height: 6px;
+  background: #2a3a5a; border-radius: 3px; overflow: hidden; vertical-align: middle;
+  flex-shrink: 0;
+}
+.party-mini-bar-fill {
+  display: block; height: 100%;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  border-radius: 3px; transition: width 0.3s ease;
+}
+.party-mini-bar-fill.player-mini-bar { background: linear-gradient(90deg, #2e7d32, #4caf50); }
+.party-hp-num-small { font-size: 10px; color: #7a9ac0; }
+
 /* ── Press Turn ─────────────────────────────────────────── */
 #press-turn-display {
   display: flex; flex-direction: row; justify-content: space-between;
@@ -301,6 +906,21 @@ body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.3; }
 }
+
+/* 行動點消耗轉場：先膨脹發光，再旋轉縮小消失 */
+@keyframes pt-token-consume {
+  0%   { transform: scale(1)   rotate(0deg);   opacity: 1; filter: brightness(1); }
+  25%  { transform: scale(1.6) rotate(-20deg); opacity: 1; filter: brightness(2.5); }
+  100% { transform: scale(0)   rotate(30deg);  opacity: 0; filter: brightness(1); }
+}
+/* Pass 轉場：◆ 閃白光後變色成 ◈ */
+@keyframes pt-token-convert {
+  0%   { transform: scale(1);   filter: brightness(1); }
+  40%  { transform: scale(1.4); filter: brightness(3) saturate(0); }
+  100% { transform: scale(1);   filter: brightness(1); }
+}
+.pt-token--consumed { display: inline-block; animation: pt-token-consume 0.32s ease-in forwards; }
+.pt-token--convert  { display: inline-block; animation: pt-token-convert 0.28s ease-out forwards; }
 
 .btn-pass { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff; }
 
@@ -387,6 +1007,14 @@ body {
 
 #screen-shop { justify-content: center; background-color: #0a1a0a; }
 
+#shop-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 16px;
+  max-height: 90vh;
+}
+
 #shop-box {
   display: flex; flex-direction: column; align-items: center; gap: 12px;
   background-color: #102010;
@@ -396,8 +1024,68 @@ body {
   max-height: 90vh; overflow-y: auto;
 }
 
+/* 右側欄：金幣 + 隊伍 */
+#shop-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #102010;
+  border: 2px solid #2e7d32;
+  border-radius: 16px;
+  padding: 18px 16px;
+  width: 180px;
+  flex-shrink: 0;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#shop-money-display { color: #ffd700; font-size: 15px; font-weight: bold; }
+
+.shop-sidebar-title {
+  font-size: 11px;
+  color: #66bb6a;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1e4020;
+}
+
+#shop-party-list { display: flex; flex-direction: column; gap: 8px; }
+
+.shop-party-card {
+  background: #0d2010;
+  border: 1px solid #1e4020;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+.shop-party-ko { opacity: 0.45; }
+.shop-party-name { font-weight: bold; color: #a5d6a7; margin-bottom: 5px; }
+.shop-party-bar-wrap {
+  background: #0a1a0a;
+  border-radius: 3px;
+  height: 4px;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+.shop-party-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.shop-party-stats { color: #7aaa88; font-size: 11px; line-height: 1.6; }
+
+.shop-inv-empty { color: #4a6a50; font-size: 12px; font-style: italic; }
+.shop-inv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #a5d6a7;
+  padding: 3px 0;
+  border-bottom: 1px solid #1a3a1a;
+}
+.shop-inv-row:last-child { border-bottom: none; }
+.shop-inv-name { flex: 1; }
+.shop-inv-qty  { color: #ffd700; font-weight: bold; margin-left: 8px; }
+
 #shop-title     { color: #81c784; font-size: 22px; }
-#shop-money-display { color: #ffd700; font-size: 15px; }
 #shop-message   { color: #a5d6a7; font-size: 14px; min-height: 20px; }
 
 #shop-item-list { display: flex; flex-direction: column; gap: 6px; width: 100%; }
@@ -572,8 +1260,9 @@ body {
 
 .btn-hud {
   background-color: #2e7d32; color: #fff;
-  flex: none; padding: 6px 12px; font-size: 13px;
+  flex: none; padding: 4px 8px; font-size: 11px;
   border-radius: 6px; margin-left: auto;
+  white-space: nowrap;
 }
 
 /* ── 技能按鈕 ─────────────────────────────────────────── */
@@ -629,61 +1318,47 @@ body {
    同伴行動面板
    ══════════════════════════════════════════════════════════════ */
 
-#ally-action-panel {
+/* （己方HP列已移至戰場精靈區，#party-hp-row 已移除） */
+
+/* ── 統一行動區（原同伴HP位置） ────────────────────────── */
+#party-action-area {
+  position: relative;         /* 讓 inspect-panel 的 absolute 以此為基準 */
+  border-top: 1px solid #1e3560;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 8px;
+  padding: 6px 0 0 0;
+  transition: border-left-color 0.18s ease, padding-left 0.18s ease;
+}
+#party-action-area.active--player {
+  border-left-color: #4caf50;
+  padding-left: 10px;
+}
+#party-action-area.active--ally {
+  border-left-color: #42a5f5;
+  padding-left: 10px;
+}
+
+/* 玩家行動區 */
+#player-action-zone {
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* 同伴行動區 */
+#ally-action-zone {
   background: linear-gradient(90deg, #0d1f3c, #162040);
-  border: 1px solid #2a4a8a;
-  border-radius: 10px;
+  border: 1px solid #2a4a8a; border-radius: 10px;
   padding: 8px 14px 10px;
   display: flex; flex-direction: column; gap: 6px;
 }
-
 #ally-action-title {
   font-size: 13px; font-weight: bold;
   color: #90caf9; letter-spacing: 0.3px;
 }
-
 #ally-action-buttons {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ally-btn-row {
   display: flex; flex-direction: row; gap: 8px; flex-wrap: wrap;
-}
-
-/* ── 同伴 HP 列 ────────────────────────────────────────── */
-#ally-hp-area {
-  display: flex; flex-direction: row; align-items: center;
-  gap: 10px; flex-wrap: wrap;
-  padding: 6px 2px;
-  border-top: 1px solid #1e3560;
-}
-
-.ally-hp-label-text {
-  font-size: 12px; color: #7a8aaa; flex-shrink: 0;
-}
-
-.ally-hp-card {
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid #1e3560; border-radius: 8px;
-  padding: 4px 10px; font-size: 12px; color: #c8d8f0;
-}
-
-.ally-hp-card.ally-knocked-out {
-  opacity: 0.4; border-color: #555;
-}
-
-.ally-mini-bar-wrap {
-  display: inline-block; width: 50px; height: 6px;
-  background: #2a3a5a; border-radius: 3px; overflow: hidden;
-  vertical-align: middle;
-}
-
-.ally-mini-bar-fill {
-  display: block; height: 100%;
-  background: linear-gradient(90deg, #1565c0, #42a5f5);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.ally-hp-num-small {
-  font-size: 11px; color: #7a9ac0;
 }
 
 /* ── 同伴商店卡片 ─────────────────────────────────────── */
@@ -745,10 +1420,14 @@ body {
    ══════════════════════════════════════════════════════════════ */
 
 #inspect-panel {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
   display: flex; flex-direction: column; gap: 8px;
-  background: rgba(5, 8, 20, 0.9);
+  background: rgba(5, 8, 20, 0.97);
   border: 1px solid #3a4a6a; border-radius: 10px;
   padding: 10px 16px 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
 
 #inspect-title {
@@ -768,7 +1447,202 @@ body {
 .btn-inspect {
   background-color: #2d3a5a;
   color: #90caf9;
-  flex: none; padding: 10px 14px;
+  flex: none;
+  padding: 6px 12px;
+  font-size: 13px;
+  align-self: center;
+  white-space: nowrap;
 }
 
 .btn-inspect:hover { background-color: #3a4f7a; }
+
+
+/* ══════════════════════════════════════════════════════════════
+   設定按鈕 & 設定 Overlay
+   ══════════════════════════════════════════════════════════════ */
+
+.settings-btn {
+  position: absolute; top: 8px; left: 8px; z-index: 500;
+  width: 40px; height: 40px; padding: 0;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex: none;               /* 不被外層 flex 拉伸 */
+  transition: background 0.2s;
+}
+.settings-btn:hover  { background: rgba(0,0,0,0.85); transform: none; }
+.settings-btn:active { transform: scale(0.92); }
+.settings-btn img {
+  width: 26px; height: 26px; object-fit: contain;
+  mix-blend-mode: screen;   /* 讓黑色底圖透明 */
+}
+
+/* ── Overlay 背景 ────────────────────────────────────────── */
+#settings-overlay {
+  position: fixed; inset: 0; z-index: 1500;
+  display: flex; align-items: center; justify-content: center;
+}
+#settings-overlay-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(3px);
+}
+
+/* ── 設定面板 ────────────────────────────────────────────── */
+#settings-panel {
+  position: relative; z-index: 1;
+  background: #0a1020; border: 2px solid #1e3560;
+  border-radius: 14px; padding: 28px 36px;
+  min-width: 360px;
+  display: flex; flex-direction: column; gap: 22px;
+  box-shadow: 0 0 40px rgba(15,52,96,0.9);
+}
+#settings-title {
+  font-size: 18px; font-weight: bold; color: #c8d8f8;
+  text-align: center;
+  border-bottom: 1px solid #1e3560; padding-bottom: 12px;
+}
+
+/* ── 每一個設定行 ─────────────────────────────────────────── */
+.settings-block {
+  display: flex; align-items: center; gap: 16px;
+}
+.settings-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  object-fit: contain;
+  mix-blend-mode: screen;   /* 黑色底圖透明 */
+}
+
+/* ── 音量滑桿 ────────────────────────────────────────────── */
+.vol-track {
+  flex: 1; height: 8px;
+  background: #3a3a3a; border-radius: 4px;
+  position: relative; cursor: pointer;
+  user-select: none;
+}
+.vol-fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: linear-gradient(90deg, #2e7d32, #4caf50);
+  border-radius: 4px; pointer-events: none;
+  transition: width 0.04s linear;
+}
+.vol-thumb {
+  position: absolute; top: 50%;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #ddeeff; border: 2px solid #4caf50;
+  transform: translate(-50%, -50%);
+  cursor: grab; pointer-events: all;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.6);
+  transition: border-color 0.15s, background 0.15s;
+}
+.vol-thumb:active { cursor: grabbing; }
+.vol-thumb.muted  { border-color: #555; background: #888; }
+
+/* ══════════════════════════════════════════════════════════
+   教學 Overlay
+   ══════════════════════════════════════════════════════════ */
+#tutorial-overlay {
+  position: fixed; inset: 0;
+  z-index: 3000;
+  display: flex; align-items: center; justify-content: center;
+}
+#tutorial-mask {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.75);
+}
+#tutorial-card {
+  position: relative; z-index: 1;
+  background: #0e1a2e;
+  border: 2px solid #2a4a7a;
+  border-radius: 14px;
+  padding: 36px 40px 28px;
+  width: min(480px, 88vw);
+  display: flex; flex-direction: column; align-items: center;
+  gap: 18px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+#tutorial-skip-btn {
+  position: absolute; top: 12px; right: 14px;
+  background: transparent; border: 1px solid #445;
+  color: #778; border-radius: 6px;
+  padding: 4px 10px; font-size: 12px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+#tutorial-skip-btn:hover { background: #1e2a3a; color: #aab; }
+
+#tutorial-img-wrap {
+  width: 100%; display: flex; justify-content: center;
+}
+#tutorial-img {
+  max-width: 200px; max-height: 140px;
+  object-fit: contain; border-radius: 8px;
+}
+#tutorial-text {
+  color: #d8e4f0; font-size: 18px; line-height: 1.7;
+  text-align: center; white-space: pre-line;
+  min-height: 56px;
+}
+#tutorial-footer {
+  width: 100%; display: flex;
+  align-items: center; justify-content: space-between;
+}
+#tutorial-dots {
+  display: flex; gap: 7px;
+}
+.tutorial-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #2a4a7a; transition: background 0.2s;
+}
+.tutorial-dot.active { background: #5090e0; }
+#tutorial-next-btn {
+  background: #1a4080; border: none; color: #cde;
+  border-radius: 8px; padding: 8px 20px; font-size: 15px;
+  cursor: pointer; transition: background 0.15s;
+}
+#tutorial-next-btn:hover { background: #2255a0; }
+
+/* ── 設定開關 ────────────────────────────────────────────── */
+.settings-toggle-block {
+  justify-content: space-between; align-items: center;
+}
+.settings-toggle-label {
+  color: #ccd; font-size: 15px; flex: 1;
+}
+.settings-toggle-btn {
+  width: 52px; height: 28px;
+  border-radius: 14px; border: none; cursor: pointer;
+  font-size: 12px; font-weight: bold; letter-spacing: 1px;
+  background: #1a6b2a; color: #8ef5a0;
+  transition: background 0.2s, color 0.2s;
+}
+.settings-toggle-btn.off {
+  background: #3a2222; color: #a05050;
+}
+
+/* ── 隊伍 Overlay ────────────────────────────────────────────── */
+#party-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2000;
+}
+#party-overlay-bg {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+#party-overlay-content {
+  position: relative; z-index: 1;
+  background: #0e1a2e;
+  border: 2px solid #2a4a7a;
+  border-radius: 12px;
+  padding: 20px 24px 16px;
+  min-width: 280px; max-width: 360px; width: 90vw;
+  display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+}
+#party-overlay-title {
+  font-size: 16px; font-weight: bold;
+  color: #c8d8f8; border-bottom: 1px solid #2a4a7a;
+  padding-bottom: 8px;
+}

@@ -12,46 +12,127 @@
        畫面 1：迷宮主畫面
        ════════════════════════════════════════════════════ -->
   <div id="screen-map">
+    <div id="map-layout">
 
-    <!-- 頂部 HUD -->
-    <div id="hud">
-      <div class="hud-item">
-        <span class="hud-label">❤️ HP</span>
-        <span id="hud-hp">100 / 100</span>
+      <!-- ── 左側：地圖 ── -->
+      <div id="map-left">
+        <button class="settings-btn" onclick="openSettings()" title="設定">
+          <img src="assets/picture/設定.png" alt="⚙️"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <span style="display:none;font-size:20px">⚙️</span>
+        </button>
+        <!-- viewport wrap：讓 map-message 可以 absolute 覆蓋在地圖上 -->
+        <div id="map-viewport-wrap">
+          <div id="viewport">
+            <div id="game-board"></div>
+          </div>
+          <!-- 提示訊息：浮蓋在地圖上方 -->
+          <div id="map-message"></div>
+        </div>
+        <div id="controls-hint">WASD / ↑↓←→ 移動　M 地圖　B 背包　C 關閉　空格鍵 確認　ESC 設定</div>
       </div>
-      <div class="hud-item">
-        <span class="hud-label">⚔️ ATK</span>
-        <span id="hud-atk">15</span>
+
+      <!-- ── 右側：資訊面板 ── -->
+      <div id="map-right">
+
+        <!-- 上方：資源 + 按鈕 + 隊伍 -->
+        <div id="side-stats">
+          <div class="side-section-title">資源</div>
+          <div id="side-stats-top">
+            <div id="side-resources">
+              <div class="side-resource-row">
+                <span class="side-resource-label">💰 金幣</span>
+                <span id="hud-money">0</span>
+              </div>
+              <div class="side-resource-row">
+                <span class="side-resource-label">🔑 鑰匙</span>
+                <span id="hud-keys">0</span>
+              </div>
+              <div class="side-resource-row">
+                <span class="side-resource-label">🎒 背包</span>
+                <span id="hud-items">0</span>
+              </div>
+              <div class="side-resource-row">
+                <button class="btn btn-side-action btn-side-shop" id="btn-open-shop"
+                      onclick="openShopFromHUD()" style="display:none">🛒 商店</button>
+              </div>
+            </div>
+            <div id="side-actions">
+              <button class="btn btn-side-action btn-side-code" id="btn-open-code" onclick="window.open('https://hackmd.io/@Zaiku23/ntnucsiecamp','_blank')">💻 程式碼</button>
+              <button class="btn btn-side-action" id="btn-open-inventory" onclick="openInventory()">🎒 背包</button>
+              <button class="btn btn-side-action btn-party-open" onclick="openPartyOverlay()">👥 隊伍</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 下方：小地圖 -->
+        <div id="side-minimap">
+          <div class="side-minimap-header">
+            <span class="side-section-title" style="margin:0;border:none;padding:0">🗺️ 小地圖</span>
+            <button class="btn btn-minimap-expand" onclick="openMiniMapOverlay()" title="放大地圖">⛶</button>
+          </div>
+          <canvas id="minimap-canvas"></canvas>
+        </div>
+
       </div>
-      <div class="hud-item">
-        <span class="hud-label">🛡️ DEF</span>
-        <span id="hud-def">5</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">💰 金幣</span>
-        <span id="hud-money">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">🔑 鑰匙</span>
-        <span id="hud-keys">0</span>
-      </div>
-      <div class="hud-item">
-        <span class="hud-label">🎒 背包</span>
-        <span id="hud-items">0</span>
-      </div>
-      <button class="btn btn-hud" id="btn-open-shop" onclick="openShopFromHUD()" style="display:none">
-        🛒 商店
-      </button>
     </div>
 
-    <div id="map-message"></div>
-
-    <div id="viewport">
-      <div id="game-board"></div>
+    <!-- 隊伍 overlay -->
+    <div id="party-overlay" style="display:none">
+      <div id="party-overlay-bg" onclick="closePartyOverlay()"></div>
+      <div id="party-overlay-content">
+        <div id="party-overlay-title">👥 隊伍</div>
+        <div id="side-party-list">
+          <!-- 由 JS 動態產生 -->
+        </div>
+        <button class="btn btn-minimap-close" onclick="closePartyOverlay()">✕ 關閉</button>
+      </div>
     </div>
 
-    <div id="controls-hint">使用 WASD 或 ↑↓←→ 移動</div>
+    <!-- 小地圖全螢幕 overlay -->
+    <div id="minimap-overlay" style="display:none">
+      <div id="minimap-overlay-bg" onclick="closeMiniMapOverlay()"></div>
+      <div id="minimap-overlay-content">
+        <!-- 左：地圖 canvas + 關閉按鈕 -->
+        <div id="minimap-overlay-left">
+          <div id="minimap-viewport">
+            <canvas id="minimap-canvas-large"></canvas>
+          </div>
+          <div id="minimap-pan-hint">⬆⬇⬅➡ 方向鍵移動視角　｜　<kbd>C</kbd> 或點擊背景關閉</div>
+          <button class="btn btn-minimap-close" onclick="closeMiniMapOverlay()">✕ 關閉</button>
+        </div>
+        <!-- 右：圖例 -->
+        <div id="minimap-legend">
+          <div class="legend-title">圖例</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#22e060"></span>玩家</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#2d4a7a"></span>通道</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#080d1a;border:1px solid #333"></span>牆壁</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#c89010"></span>寶箱</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#b83030"></span>敵人</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#604898"></span>門</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#1878b0"></span>射擊遊戲</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#287840"></span>商店</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#c05010"></span>傳送門</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#880010"></span>最終魔王</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#050810;border:1px solid #333"></span>未探索</div>
+        </div>
+      </div>
+    </div>
 
+    <!-- 背包 overlay -->
+    <div id="inventory-overlay" style="display:none">
+      <div id="inventory-overlay-bg" onclick="closeInventory()"></div>
+      <div id="inventory-overlay-content">
+        <div id="inventory-overlay-title">🎒 背包</div>
+        <div id="inventory-overlay-list"></div>
+        <button class="btn btn-minimap-close" onclick="closeInventory()">✕ 關閉</button>
+      </div>
+    </div>
+
+    <!-- 保留供 updateHUD() 使用的隱藏元素 -->
+    <span id="hud-hp"  style="display:none"></span>
+    <span id="hud-atk" style="display:none"></span>
+    <span id="hud-def" style="display:none"></span>
   </div>
 
 
@@ -61,98 +142,75 @@
   <div id="screen-combat" style="display:none">
 
     <div id="combat-field">
-
+      <button class="settings-btn" onclick="openSettings()" title="設定">
+      <img src="assets/picture/設定.png" alt="⚙️"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span style="display:none;font-size:20px">⚙️</span>
+      </button>
+      <!-- 敵方名稱卡片（純名稱，HP 由每個 .enemy-unit 獨立顯示） -->
       <div class="battle-info-card" id="combat-enemy-card">
         <div class="battle-card-name" id="enemy-name">敵人名稱</div>
-        <div class="battle-hp-row">
-          <span class="battle-hp-label" id="enemy-hp-label-1">HP</span>
-          <div class="hp-bar-wrap">
-            <div class="hp-bar-fill enemy-bar" id="enemy-hp-bar-fill"></div>
-          </div>
-        </div>
-        <div class="battle-hp-num" id="enemy-hp-num">100 / 100</div>
-        <div id="enemy-hp-row-2" style="display:none">
-          <div class="battle-hp-row">
-            <span class="battle-hp-label" id="enemy-hp-label-2">HP</span>
-            <div class="hp-bar-wrap">
-              <div class="hp-bar-fill enemy-bar" id="enemy-hp-bar-fill-2"></div>
-            </div>
-          </div>
-          <div class="battle-hp-num" id="enemy-hp-num-2">100 / 100</div>
-        </div>
       </div>
 
-      <div id="combat-enemy-sprite">
-        <img src="assets/picture/enemy.png" id="battle-enemy-img" class="battle-sprite enemy-sprite-img"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <span class="battle-fallback-emoji" style="display:none">👺</span>
-      </div>
+      <!-- 動態敵人顯示區：由右向左排開，JS 以 renderEnemyUnits() 填入 -->
+      <div id="combat-enemies-area"></div>
 
-      <div id="combat-enemy-sprite-2" style="display:none">
-        <img src="assets/picture/enemy.png" class="battle-sprite enemy-sprite-img"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <span class="battle-fallback-emoji" style="display:none">👺</span>
-      </div>
-
-      <div id="combat-hint"></div>
-
-      <div id="combat-player-sprite">
-        <img src="assets/picture/player.png" class="battle-sprite player-sprite-img"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <span class="battle-fallback-emoji" style="display:none">🧙</span>
-      </div>
-
-      <div class="battle-info-card" id="combat-player-card">
-        <div class="battle-card-name" id="combat-player-name">勇者</div>
-        <div class="battle-hp-row">
-          <span class="battle-hp-label">HP</span>
-          <div class="hp-bar-wrap">
-            <div class="hp-bar-fill player-bar" id="player-hp-bar-fill"></div>
-          </div>
-        </div>
-        <div class="battle-hp-num" id="player-hp-num">100 / 100</div>
-      </div>
+      <!-- 己方隊伍區（玩家 + 同伴，由 JS 以 renderPartyUnits() 填入） -->
+      <div id="combat-party-area"></div>
 
     </div>
 
     <div id="press-turn-display" style="display:none">
-      <div id="pt-player-tokens">玩家 ◆ ◆ ◆</div>
-      <div id="pt-enemy-tokens">敵人 ◆ ◆ ◆</div>
+      <div id="pt-player-tokens">玩家 ◆ ◆ ◆ ◆</div>
+      <div id="combat-hint"></div>
+      <div id="pt-enemy-tokens">敵人 ◆ ◆ ◆ ◆</div>
     </div>
 
     <div id="combat-panel">
       <div id="combat-log"></div>
-      <!-- 基本行動 -->
-      <div id="combat-buttons">
-        <button class="btn btn-attack"  id="btn-attack"  onclick="onAttack()">⚔️ 攻擊</button>
-        <button class="btn btn-defend"  id="btn-defend"  onclick="onDefend()">🛡️ 防禦</button>
-        <button class="btn btn-flee"    id="btn-flee"    onclick="onFlee()">💨 逃跑</button>
-        <button class="btn btn-pass"    id="btn-pass"    onclick="onPass()" style="display:none">🔄 傳遞</button>
+
+      <!-- 己方全員 HP + 查看按鈕 -->
+      <div id="party-hp-row">
+        <div id="party-hp-area"></div>
         <button class="btn btn-inspect" id="btn-inspect" onclick="showEnemyInfo()">📋 查看</button>
       </div>
-      <!-- 目標選擇面板 -->
-      <div id="target-select-panel" style="display:none">
-        <div id="target-select-title">選擇目標</div>
-        <div id="target-select-buttons"></div>
-        <button class="btn btn-flee" style="flex:none;padding:6px 14px" onclick="cancelTargetSelect()">✕ 取消</button>
+
+      <!-- 統一行動區：只顯示當前行動角色的選擇 -->
+      <div id="party-action-area">
+        <!-- 查看敵人面板：absolute 覆蓋在行動區上方 -->
+        <div id="inspect-panel" style="display:none">
+          <div id="inspect-title"></div>
+          <div id="inspect-content"></div>
+          <button class="btn btn-defend" style="flex:none;padding:6px 14px" onclick="hideEnemyInfo()">關閉</button>
+        </div>
+
+        <!-- 玩家行動區：輪到玩家才顯示 -->
+        <div id="player-action-zone" style="display:none">
+          <div id="combat-buttons">
+            <button class="btn btn-attack"  id="btn-attack"  onclick="onAttack()">⚔️ 攻擊</button>
+            <button class="btn btn-defend"  id="btn-defend"  onclick="onDefend()">🛡️ 防禦</button>
+            <button class="btn btn-flee"    id="btn-flee"    onclick="onFlee()">💨 逃跑</button>
+            <button class="btn btn-pass"    id="btn-pass"    onclick="onPass()" style="display:none">⏸️ 待機</button>
+          </div>
+          <!-- 目標選擇面板 -->
+          <div id="target-select-panel" style="display:none">
+            <div id="target-select-title">選擇目標</div>
+            <div id="target-select-buttons"></div>
+            <button class="btn btn-flee" style="flex:none;padding:6px 14px" onclick="cancelTargetSelect()">✕ 取消</button>
+          </div>
+          <!-- 技能行動（由 renderSkillButtons 動態填入） -->
+          <div id="combat-skills"></div>
+          <!-- 背包消耗品（由 renderInventoryButtons 動態填入） -->
+          <div id="combat-items" style="display:none"></div>
+        </div>
+
+        <!-- 同伴行動區：輪到該同伴才顯示 -->
+        <div id="ally-action-zone" style="display:none">
+          <div id="ally-action-title">同伴行動</div>
+          <div id="ally-action-buttons"></div>
+        </div>
+
       </div>
-      <!-- 查看敵人面板 -->
-      <div id="inspect-panel" style="display:none">
-        <div id="inspect-title"></div>
-        <div id="inspect-content"></div>
-        <button class="btn btn-defend" style="flex:none;padding:6px 14px" onclick="hideEnemyInfo()">關閉</button>
-      </div>
-      <!-- 技能行動（由 renderSkillButtons 動態填入） -->
-      <div id="combat-skills"></div>
-      <!-- 背包消耗品（由 renderInventoryButtons 動態填入） -->
-      <div id="combat-items" style="display:none"></div>
-      <!-- 同伴行動面板（由 engine.js 控制顯示） -->
-      <div id="ally-action-panel" style="display:none">
-        <div id="ally-action-title">同伴行動</div>
-        <div id="ally-action-buttons"></div>
-      </div>
-      <!-- 同伴 HP 顯示列 -->
-      <div id="ally-hp-area" style="display:none"></div>
     </div>
 
   </div>
@@ -163,16 +221,33 @@
        ════════════════════════════════════════════════════ -->
   <div id="screen-shop" style="display:none">
 
-    <div id="shop-box">
-      <h2 id="shop-title">🛒 商店</h2>
-      <div id="shop-money-display">
-        你的金幣：<span id="shop-player-money">0</span> 枚
+    <div id="shop-layout">
+
+      <!-- 左側：商店主體 -->
+      <div id="shop-box">
+        <h2 id="shop-title">🛒 商店</h2>
+        <div id="shop-message"></div>
+        <div id="shop-item-list">
+          <!-- 由 engine.js 動態產生 -->
+        </div>
+        <button class="btn btn-close" onclick="closeShop()">離開商店</button>
       </div>
-      <div id="shop-message"></div>
-      <div id="shop-item-list">
-        <!-- 由 engine.js 動態產生 -->
+
+      <!-- 右側：金幣 + 隊伍狀態 + 背包 -->
+      <div id="shop-sidebar">
+        <div id="shop-money-display">
+          💰 金幣：<span id="shop-player-money">0</span> 枚
+        </div>
+        <div class="shop-sidebar-title">隊伍狀態</div>
+        <div id="shop-party-list">
+          <!-- 由 engine.js 動態產生 -->
+        </div>
+        <div class="shop-sidebar-title">背包道具</div>
+        <div id="shop-inventory-list">
+          <!-- 由 engine.js 動態產生 -->
+        </div>
       </div>
-      <button class="btn btn-close" onclick="closeShop()">離開商店</button>
+
     </div>
 
   </div>
@@ -235,12 +310,29 @@
 
 
   <!-- ════════════════════════════════════════════════════
+       教學 Overlay
+       ════════════════════════════════════════════════════ -->
+  <div id="tutorial-overlay" style="display:none">
+    <div id="tutorial-mask"></div>
+    <div id="tutorial-card">
+      <button id="tutorial-skip-btn" onclick="skipTutorial()">跳過 ✕</button>
+      <div id="tutorial-img-wrap">
+        <img id="tutorial-img" src="" alt="" style="display:none">
+      </div>
+      <div id="tutorial-text"></div>
+      <div id="tutorial-footer">
+        <div id="tutorial-dots"></div>
+        <button id="tutorial-next-btn" onclick="nextTutorialPage()">下一頁 ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
        載入 JS
        ════════════════════════════════════════════════════ -->
   <script src="map.js"></script>
-  <script src="data.js"></script>
-  <script src="engine.js"></script>
-  <script src="student.js"></script>
+  <script src="new_data.js"></script>
+  <script src="new_engine.js"></script>
   <script src="audio.js"></script>
 
   <script>
@@ -251,11 +343,65 @@
     function closeShop() {
       showScreen("screen-map");
       if (shopUnlocked) {
-        document.getElementById("btn-open-shop").style.display = "inline-block";
+        document.getElementById("btn-open-shop").style.display = "block";
       }
       renderMap();
+      if (typeof notifyShopClosed === "function") notifyShopClosed();
     }
   </script>
+
+  <!-- ════════════════════════════════════════════════════
+       設定 Overlay
+       ════════════════════════════════════════════════════ -->
+  <div id="settings-overlay" style="display:none">
+    <div id="settings-overlay-bg" onclick="closeSettings()"></div>
+    <div id="settings-panel">
+      <div id="settings-title">設定</div>
+
+      <!-- 背景音樂音量 -->
+      <div class="settings-block">
+        <img id="bgm-icon"
+             src="assets/picture/背景音樂音量(開).png"
+             data-on="assets/picture/背景音樂音量(開).png"
+             data-off="assets/picture/背景音樂音量(關).png"
+             class="settings-icon" alt="BGM">
+        <div class="vol-track" id="bgm-track">
+          <div class="vol-fill" id="bgm-fill"></div>
+          <div class="vol-thumb" id="bgm-thumb"></div>
+        </div>
+      </div>
+
+      <!-- 音效音量 -->
+      <div class="settings-block">
+        <img id="sfx-icon"
+             src="assets/picture/音效音量(開).png"
+             data-on="assets/picture/音效音量(開).png"
+             data-off="assets/picture/音效音量(關).png"
+             class="settings-icon" alt="SFX">
+        <div class="vol-track" id="sfx-track">
+          <div class="vol-fill" id="sfx-fill"></div>
+          <div class="vol-thumb" id="sfx-thumb"></div>
+        </div>
+      </div>
+
+      <!-- 迷宮教學開關 -->
+      <div class="settings-block settings-toggle-block">
+        <span class="settings-toggle-label">🗺️ 迷宮教學</span>
+        <button id="toggle-maze-tutorial" class="settings-toggle-btn"
+                onclick="toggleMazeTutorialSetting()">開</button>
+      </div>
+
+      <!-- 戰鬥教學開關 -->
+      <div class="settings-block settings-toggle-block">
+        <span class="settings-toggle-label">⚔️ 戰鬥教學</span>
+        <button id="toggle-combat-tutorial" class="settings-toggle-btn"
+                onclick="toggleCombatTutorialSetting()">開</button>
+      </div>
+
+      <button class="btn btn-minimap-close" onclick="closeSettings()"
+              style="align-self:center;margin-top:4px">✕ 關閉</button>
+    </div>
+  </div>
 
 </body>
 </html>
