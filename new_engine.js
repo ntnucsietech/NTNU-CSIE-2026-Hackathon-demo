@@ -862,6 +862,11 @@ function showEnemyInfo() {
   var content = document.getElementById("inspect-content");
   if (!panel || !content) return;
 
+  if (panel.style.display !== "none" && panel.style.display !== "") {
+    hideEnemyInfo();
+    return;
+  }
+
   var e = currentEnemy;
   var html = "";
 
@@ -1941,7 +1946,7 @@ function renderEnemyUnits() {
 
   var units = activeClones.length > 0 ? activeClones : (currentEnemy ? [currentEnemy] : []);
   var count = units.length;
-  var size = count === 1 ? 120 : count === 2 ? 100 : count <= 4 ? 82 : 65;
+  var size = count === 1 ? 135 : count === 2 ? 110 : count <= 4 ? 90 : 72;
 
   area.innerHTML = "";
 
