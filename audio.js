@@ -57,6 +57,7 @@ var AudioSystem = (function () {
     buy        : { src: "assets/audio/SFX/buy.wav",        volume: 1.0 },
     //小遊戲
     shot       : { src: "assets/audio/SFX/shot.wav",       volume: 1.0 },
+    sword      : { src: "assets/audio/SFX/sword.mp3",     volume: 1.0 },
     key        : null,
   };
 
@@ -88,13 +89,15 @@ var AudioSystem = (function () {
       src       : "assets/audio/music/bgm_battle1.mp3",
       volume    : 0.8,
       loopStart : 0,
-      loopEnd   : null
+      loopEnd   : null,
+      noFadeIn  : true
     },
     boss: {
       src       : "assets/audio/music/bgm_bossfight.mp3",
       volume    : 0.9,
       loopStart : 0,
-      loopEnd   : null
+      loopEnd   : null,
+      noFadeIn  : true
     },
     clear: {
       src       : "assets/audio/music/bgm_victory.mp3",
@@ -353,17 +356,20 @@ var AudioSystem = (function () {
     source.loopStart = loopStart;
     source.loopEnd   = loopEnd;
 
-    // ── 音量（淡入：靜音 BGM_FADE_DELAY 秒後再線性增至目標）──
+    // ── 音量 ──
     var duckMult  = (_bgmDuckCount > 0) ? BGM_DUCK_FACTOR : 1.0;
     var targetVol = (track.volume || 1.0) * bgmMasterVolume * duckMult;
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    // BGM_FADE_DELAY 秒靜音後開始淡入
-    gain.gain.setValueAtTime(0, ctx.currentTime + BGM_FADE_DELAY);
-    gain.gain.linearRampToValueAtTime(targetVol,
-      ctx.currentTime + BGM_FADE_DELAY + BGM_FADE_IN);
-    _bgmFadingIn = true;
-    setTimeout(function() { _bgmFadingIn = false; },
-      (BGM_FADE_DELAY + BGM_FADE_IN) * 1000 + 50);
+    if (track.noFadeIn) {
+      gain.gain.setValueAtTime(targetVol, ctx.currentTime);
+    } else {
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.setValueAtTime(0, ctx.currentTime + BGM_FADE_DELAY);
+      gain.gain.linearRampToValueAtTime(targetVol,
+        ctx.currentTime + BGM_FADE_DELAY + BGM_FADE_IN);
+      _bgmFadingIn = true;
+      setTimeout(function() { _bgmFadingIn = false; },
+        (BGM_FADE_DELAY + BGM_FADE_IN) * 1000 + 50);
+    }
 
     source.connect(gain);
     gain.connect(ctx.destination);
@@ -375,10 +381,10 @@ var AudioSystem = (function () {
   }
 
   /**
-   * 停止目前播放的 BGM（含 0.3 秒淡出）。
+   * 停止目前播放的 BGM（含淡出）。
    */
   function stopBgm() {
-    _bgmFadingIn = false;  // 取消淡入 flag，讓 gain 可自由設定
+    _bgmFadingIn = false;
     if (currentBgmSource) {
       var FADE = BGM_FADE_OUT;
       var src  = currentBgmSource;
@@ -390,6 +396,16 @@ var AudioSystem = (function () {
       setTimeout(function() {
         try { src.stop(); } catch (e) {}
       }, FADE * 1000 + 20);
+      currentBgmSource = null;
+      currentBgmGain   = null;
+    }
+    currentBgmName = null;
+  }
+
+  function stopBgmNow() {
+    _bgmFadingIn = false;
+    if (currentBgmSource) {
+      try { currentBgmSource.stop(); } catch (e) {}
       currentBgmSource = null;
       currentBgmGain   = null;
     }
@@ -493,6 +509,7 @@ var AudioSystem = (function () {
     // BGM
     playBgm          : playBgm,
     stopBgm          : stopBgm,
+    stopBgmNow       : stopBgmNow,
     playBgmForSituation : playBgmForSituation,
     setBgmVolume     : setBgmVolume,
     duckBgm          : duckBgm,

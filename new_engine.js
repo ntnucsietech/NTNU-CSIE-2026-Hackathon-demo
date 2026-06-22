@@ -1561,6 +1561,24 @@ function _pickEnemy(x, y) {
   return tier[Math.floor(posRng() * tier.length)];
 }
 
+function playEncounterTransition(callback) {
+  if (typeof AudioSystem !== "undefined") AudioSystem.stopBgmNow();
+  var el = document.getElementById("encounter-transition");
+  if (!el) { playSound("sword"); callback(); return; }
+  el.style.display = "flex";
+  el.style.animation = "none";
+  var slash = el.querySelector(".encounter-slash");
+  if (slash) { slash.style.animation = "none"; }
+  void el.offsetWidth;
+  el.style.animation = "";
+  if (slash) slash.style.animation = "";
+  playSound("sword");
+  setTimeout(function() {
+    callback();
+    setTimeout(function() { el.style.display = "none"; }, 50);
+  }, 800);
+}
+
 function triggerEnemy(x, y) {
   var ed = _pickEnemy(x, y);
   if (!ed) {
@@ -1587,7 +1605,7 @@ function triggerEnemy(x, y) {
     activeClones = [currentEnemy, companion];
   }
 
-  startCombat();
+  playEncounterTransition(function() { startCombat(); });
 }
 
 function triggerFinalBoss(x, y) {
@@ -1599,12 +1617,14 @@ function triggerFinalBoss(x, y) {
     atk: finalBoss.atk,   def: finalBoss.def, reward: finalBoss.reward,
     isFinalBoss: true
   };
-  if (typeof dialogues !== "undefined" &&
-      dialogues.boss_pre && dialogues.boss_pre.length > 0) {
-    showDialogue(dialogues.boss_pre, function() { startCombat(); });
-  } else {
-    startCombat();
-  }
+  playEncounterTransition(function() {
+    if (typeof dialogues !== "undefined" &&
+        dialogues.boss_pre && dialogues.boss_pre.length > 0) {
+      showDialogue(dialogues.boss_pre, function() { startCombat(); });
+    } else {
+      startCombat();
+    }
+  });
 }
 
 // ── 商店 ─────────────────────────────────────────────────────
