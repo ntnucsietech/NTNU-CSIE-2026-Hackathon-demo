@@ -64,7 +64,7 @@ var enemies = [
   { name: "骷髏騎士",  tier: "B", hp: 250, maxHp: 250, atk: 15, def: 10, spd:  7, reward: { exp: 34, money: 67 } },
   { name: "Error404★", tier: "B", hp: 10,  maxHp: 10,  atk: 27, def:  0, spd: 15, reward: { exp: 45, money: 90 }, isMiniBarrier: true, noOneShot: true },
   { name: "史萊姆",    tier: "B", hp: 190, maxHp: 190, atk: 20, def:  8, spd:  5, reward: { exp: 37, money: 73 } },
-  { name: "遠古圖騰",      tier: "B", hp: 120, maxHp: 120, atk: 17, def:  5, spd:  3, reward: { exp: 39, money: 77 }, isPaired: true },
+  { name: "石像",      tier: "B", hp: 120, maxHp: 120, atk: 17, def:  5, spd:  3, reward: { exp: 39, money: 77 }, isPaired: true },
   // C 區（Tier 3）
   { name: "死靈法師",  tier: "C", hp: 420, maxHp: 420, atk: 34, def: 15, spd: 10, reward: { exp: 50, money: 80 } },
   { name: "眼球怪",    tier: "C", hp: 510, maxHp: 510, atk: 28, def: 18, spd: 13, reward: { exp: 55, money: 94 } },
@@ -72,9 +72,9 @@ var enemies = [
 ];
 
 // ── 最終 Boss ─────────────────────────────────────────────────
-// HP 低於 60% 時召喚 1~3 個魔王小兵（各 HP 20）
+// HP 低於 60% 時召喚 1~3 個分身（各 HP 20）
 var finalBoss = {
-  name: "黑暗巨龍", hp: 1250, maxHp: 1250, atk: 53, def: 20, spd: 18,
+  name: "黑暗魔王", hp: 1250, maxHp: 1250, atk: 53, def: 20, spd: 18,
   reward: { exp: 200, money: 150 }
 };
 
@@ -101,11 +101,26 @@ var skillDefs = [
     desc: "造成 3× 傷害，自損 15 HP（冷卻 3 回合）",
     type: "craft", recipe: ["power_strike", "heal_magic"], cooldown: 3, baseHit: 75 },
   { id: "chain_slash",  name: "連斬",     icon: "🌀",
-    desc: "同時攻擊所有小兵，各造成 ATK 傷害（冷卻 3 回合）",
+    desc: "同時攻擊所有分身，各造成 ATK 傷害（冷卻 3 回合）",
     type: "shop", price: 60, cooldown: 3, baseHit: 80 },
   { id: "skukaja",     name: "斯庫卡加", icon: "⬆️",
     desc: "增加我方全體速度一階段（最多 3 階段，每階段持續 3 回合，冷卻 1 回合）",
-    type: "shop", price: 50, cooldown: 1 }
+    type: "shop", price: 50, cooldown: 1 },
+  { id: "sukunda",     name: "斯坤達",   icon: "🐌",
+    desc: "降低敵方全體速度一階段（最低 -3 階段，持續 3 回合，冷卻 1 回合）",
+    type: "shop", price: 45, cooldown: 1 },
+  { id: "tarukaja",    name: "塔爾卡加", icon: "🗡️",
+    desc: "增加我方全體攻擊一階段（最多 3 階段，持續 3 回合，冷卻 1 回合）",
+    type: "shop", price: 50, cooldown: 1 },
+  { id: "tarunda",     name: "塔倫達",   icon: "💢",
+    desc: "降低敵方全體攻擊一階段（最低 -3 階段，持續 3 回合，冷卻 1 回合）",
+    type: "shop", price: 45, cooldown: 1 },
+  { id: "rakukaja",    name: "拉庫卡加", icon: "🔰",
+    desc: "增加我方全體防禦一階段（最多 3 階段，持續 3 回合，冷卻 1 回合）",
+    type: "shop", price: 50, cooldown: 1 },
+  { id: "rakunda",     name: "拉坤達",   icon: "🌊",
+    desc: "降低敵方全體防禦一階段（最低 -3 階段，持續 3 回合，冷卻 1 回合）",
+    type: "shop", price: 45, cooldown: 1 },
 ];
 
 
@@ -162,4 +177,17 @@ var MG_ENEMY_DURATION = 1500;
 var MG_SPAWN_INTERVAL = 1000;
 
 
-// ── 對話文本 ────────────────────────�
+// ── 對話文本 ────────────────────────
+var dialogues = {
+  intro: [
+    { speaker: "旁白",   text: "黑暗魔王的詛咒籠罩了整片大地……" },
+    { speaker: "勇者",   text: "我一定要找到他，終結這一切！" }
+  ],
+  shop_first: [
+    { speaker: "商人",   text: "歡迎光臨！看看有什麼需要的吧。" }
+  ],
+  boss_pre: [
+    { speaker: "黑暗魔王", text: "你終於來了……我已等候多時。" },
+    { speaker: "勇者",     text: "今天就是你的末日！" }
+  ]
+};
