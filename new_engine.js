@@ -1353,11 +1353,11 @@ function renderMap() {
           img.src = "assets/picture/玩家.png"; img.alt = "玩家"; img.className = "sprite";
           tile.appendChild(img);
         } else {
-          applyTileStyle(tile, currentMap[y][x]);
+          applyTileStyle(tile, currentMap[y][x], x, y);
         }
       } else if (isExplored) {
         tile.classList.add("tile--explored");
-        applyTileStyle(tile, currentMap[y][x]);
+        applyTileStyle(tile, currentMap[y][x], x, y);
       } else {
         tile.classList.add("tile--hidden");
       }
@@ -1381,17 +1381,22 @@ function applyCameraTransform() {
   visionRadius = Math.ceil(half);
 }
 
-function applyTileStyle(tile, tileType) {
+function applyTileStyle(tile, tileType, x, y) {
   var sm = {};
   sm[MAP_TILE.WALL]       = { cls: "tile--wall",     src: "",                          alt: "",       emoji: ""   };
   sm[MAP_TILE.EMPTY]      = { cls: "tile--empty",    src: "",                          alt: "",       emoji: ""   };
   sm[MAP_TILE.CHEST]      = { cls: "tile--chest",    src: "assets/picture/寶箱.png",  alt: "寶箱",   emoji: "📦" };
-  sm[MAP_TILE.ENEMY]      = { cls: "tile--enemy",    src: "assets/picture/哥布林.png",  alt: "敵人",   emoji: "👺" };
-  sm[MAP_TILE.DOOR]       = { cls: "tile--door",     src: "assets/picture/門鎖.png",   alt: "門",     emoji: "🚪" };
-  sm[MAP_TILE.MINI_GAME]  = { cls: "tile--minigame", src: "",                          alt: "小遊戲", emoji: "🌀" };
-  sm[MAP_TILE.SHOP]       = { cls: "tile--shop",     src: "",                          alt: "商店",   emoji: "🛒" };
-  sm[MAP_TILE.FINAL_BOSS] = { cls: "tile--boss",     src: "assets/picture/黑暗巨龍.png",   alt: "魔王",   emoji: "👿" };
-  sm[MAP_TILE.PORTAL]     = { cls: "tile--portal",   src: "",                          alt: "傳送門", emoji: "⚡" };
+  var _enemySrc = "assets/picture/哥布林.png";
+  if (tileType === MAP_TILE.ENEMY && x !== undefined && y !== undefined) {
+    var _ed = _pickEnemy(x, y);
+    if (_ed && _ed.img) _enemySrc = _ed.img;
+  }
+  sm[MAP_TILE.ENEMY]      = { cls: "tile--enemy",    src: _enemySrc,                   alt: "敵人",   emoji: "👺" };
+  sm[MAP_TILE.DOOR]       = { cls: "tile--door",     src: "assets/picture/門鎖.png"    ,alt: "門",    emoji: "🚪" };
+  sm[MAP_TILE.MINI_GAME]  = { cls: "tile--minigame", src: "assets/picture/小遊戲靶.png",alt: "小遊戲", emoji: "🌀" };
+  sm[MAP_TILE.SHOP]       = { cls: "tile--shop",     src: "assets/picture/商店.png"    ,alt: "商店",   emoji: "🛒" };
+  sm[MAP_TILE.FINAL_BOSS] = { cls: "tile--boss",     src: "assets/picture/黑暗巨龍.png",alt: "魔王",   emoji: "👿" };
+  sm[MAP_TILE.PORTAL]     = { cls: "tile--portal",   src: "assets/picture/傳送門.png",  alt: "傳送門", emoji: "⚡" };
 
   var info = sm[tileType];
   if (!info) { tile.classList.add("tile--empty"); return; }
@@ -1634,14 +1639,14 @@ function triggerEnemy(x, y) {
     x: x, y: y,
     name: ed.name, hp: ed.hp, maxHp: ed.maxHp,
     atk: ed.atk,  def: ed.def, spd: ed.spd || 0, reward: ed.reward,
-    isMiniBarrier: ed.isMiniBarrier || false
+    isMiniBarrier: ed.isMiniBarrier || false, img: ed.img || null
   };
 
   if (ed.isPaired) {
     var companion = {
       name: ed.name, hp: ed.hp, maxHp: ed.maxHp,
       atk: ed.atk,  def: ed.def, spd: ed.spd || 0, reward: { money: 0 },
-      isMiniBarrier: ed.isMiniBarrier || false
+      isMiniBarrier: ed.isMiniBarrier || false, img: ed.img || null
     };
     pairedFightEnemy = { x: x, y: y, reward: ed.reward, maxHp: ed.hp, name: ed.name };
     activeClones = [currentEnemy, companion];
@@ -1657,7 +1662,7 @@ function triggerFinalBoss(x, y) {
     x: x, y: y,
     name: finalBoss.name, hp: finalBoss.hp, maxHp: finalBoss.maxHp,
     atk: finalBoss.atk,   def: finalBoss.def, spd: finalBoss.spd || 0, reward: finalBoss.reward,
-    isFinalBoss: true
+    isFinalBoss: true, img: finalBoss.img || null
   };
   playEncounterTransition(function() {
     if (typeof dialogues !== "undefined" &&
@@ -2032,7 +2037,7 @@ function renderEnemyUnits() {
 
       var img = document.createElement("img");
       var isBoss = unit.isFinalBoss || (savedBoss !== null && activeClones.indexOf(unit) !== -1);
-      img.src = isBoss ? "assets/picture/黑暗巨龍.png" : "assets/picture/哥布林.png";
+      img.src = unit.img || (isBoss ? "assets/picture/黑暗巨龍.png" : "assets/picture/哥布林.png");
       img.className = "battle-sprite enemy-sprite-img";
       img.onerror   = function() { this.style.display = "none"; };
       imgWrap.appendChild(img);
@@ -2121,7 +2126,7 @@ function renderPartyUnits() {
 
   for (var i = 0; i < currentAllies.length; i++) {
     var ally = currentAllies[i];
-    area.appendChild(makeUnit(i + 1, "ally", "assets/picture/玩家.png",
+    area.appendChild(makeUnit(i + 1, "ally", ally.img || "assets/picture/玩家.png",
                               ally.icon || "🧑", ally.name, ally.knockedOut));
   }
 }
@@ -2389,7 +2394,11 @@ function executeCombatRound(action) {
         var pidx = activeClones.indexOf(deadClone);
         if (pidx !== -1) activeClones.splice(pidx, 1);
         if (activeClones.length === 0) { endPairedFight(); }
-        else { setTimeout(function() { processAllyTurns(_afterPlayerPhase); }, 400); }
+        else {
+          currentEnemy = activeClones[0];  // 更新到存活的分身
+          renderEnemyUnits();
+          setTimeout(function() { processAllyTurns(_afterPlayerPhase); }, 400);
+        }
       } else {
         setTimeout(function() { processAllyTurns(_afterPlayerPhase); }, 400);
       }
@@ -4288,13 +4297,10 @@ function spawnMgEnemy() {
   var maxX = area.clientWidth  - 50;
   var maxY = area.clientHeight - 50;
   var en = document.createElement("img");
-  en.src = "assets/picture/小遊戲靶.png";
-  en.style.position = "absolute";
+  en.src       = "assets/picture/小遊戲靶.png";
+  en.className  = "mg-enemy";
   en.style.left = Math.floor(Math.random() * maxX) + "px";
   en.style.top  = Math.floor(Math.random() * maxY) + "px";
-  en.style.width  = "50px";
-  en.style.height = "50px";
-  en.style.cursor = "crosshair";
   area.appendChild(en);
   mgCurrentEnemy = en;
 
@@ -4342,8 +4348,10 @@ function onMgClick(e) {
 }
 
 function updateMiniGameHUD() {
-  var scoreEl = document.getElementById("mg-score");
-  var timeEl  = document.getElementById("mg-time");
-  if (scoreEl) scoreEl.textContent = mgScore + " / " + MG_TARGET;
-  if (timeEl)  timeEl.textContent  = mgTimeLeft;
+  var scoreEl  = document.getElementById("mg-score");
+  var targetEl = document.getElementById("mg-target");
+  var timeEl   = document.getElementById("mg-time");
+  if (scoreEl)  scoreEl.textContent  = mgScore;
+  if (targetEl) targetEl.textContent = MG_TARGET;
+  if (timeEl)   timeEl.textContent   = mgTimeLeft;
 }
